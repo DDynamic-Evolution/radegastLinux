@@ -226,6 +226,97 @@
                                        FontSize="11" Opacity="0.65" Margin="0,6,0,0" />
                         </Grid>
                     </TabItem>
+                    <TabItem Header="RLV" AutomationProperties.Name="RLV preferences">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="8" Spacing="12">
+                                <TextBlock Text="Restrained Love Viewer (RLV)"
+                                           FontWeight="SemiBold" FontSize="14" />
+                                <TextBlock Text="RLV allows in-world objects and scripts to control certain aspects of your viewer. These settings are only effective when connected to a grid that supports RLV."
+                                           TextWrapping="Wrap" FontSize="11" Opacity="0.65" />
+                                <CheckBox Content="Enable RLV"
+                                          IsChecked="{Binding RlvEnabled}"
+                                          AutomationProperties.Name="Enable RLV" />
+                                <CheckBox Content="Enable debug commands (@-commands in chat)"
+                                          IsChecked="{Binding RlvDebugEnabled}"
+                                          AutomationProperties.Name="Enable RLV debug commands" />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+                    <TabItem Header="VPN" AutomationProperties.Name="VPN preferences">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="8" Spacing="12">
+                                <TextBlock Text="WireGuard VPN"
+                                           FontWeight="SemiBold" FontSize="14" />
+                                <TextBlock Text="Manage WireGuard tunnel profiles. Requires the vpn-helper binary with CAP_NET_ADMIN (set via sudo setcap cap_net_admin+ep vpn-helper)."
+                                           TextWrapping="Wrap" FontSize="11" Opacity="0.65" />
+
+                                <ListBox ItemsSource="{Binding Vpn.Profiles}"
+                                         SelectedItem="{Binding Vpn.SelectedProfile}"
+                                         Height="120"
+                                         AutomationProperties.Name="VPN profiles">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Name}" />
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Button Content="Add" Command="{Binding Vpn.AddProfileCommand}" />
+                                    <Button Content="Edit" Command="{Binding Vpn.EditProfileCommand}"
+                                            IsEnabled="{Binding Vpn.SelectedProfile, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                    <Button Content="Remove" Command="{Binding Vpn.RemoveProfileCommand}"
+                                            IsEnabled="{Binding Vpn.SelectedProfile, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                    <Button Content="Connect" Command="{Binding Vpn.ConnectProfileCommand}"
+                                            IsEnabled="{Binding Vpn.SelectedProfile, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                    <Button Content="Disconnect" Command="{Binding Vpn.DisconnectProfileCommand}"
+                                            IsEnabled="{Binding Vpn.IsConnected}" />
+                                </StackPanel>
+
+                                <TextBlock Text="{Binding Vpn.StatusText}" FontSize="11" Opacity="0.7" />
+
+                                <StackPanel Spacing="6" IsVisible="{Binding Vpn.IsEditing}">
+                                    <Separator />
+                                    <TextBlock Text="Profile" FontWeight="SemiBold" />
+                                    <Grid ColumnDefinitions="100,*">
+                                        <TextBlock Grid.Column="0" Text="Name" />
+                                        <TextBox Grid.Column="1" Text="{Binding Vpn.EditName}" />
+                                    </Grid>
+                                    <Grid ColumnDefinitions="100,*">
+                                        <TextBlock Grid.Column="0" Text="Private Key" />
+                                        <TextBox Grid.Column="1" Text="{Binding Vpn.EditPrivateKey}" />
+                                    </Grid>
+                                    <Grid ColumnDefinitions="100,*">
+                                        <TextBlock Grid.Column="0" Text="Address" />
+                                        <TextBox Grid.Column="1" Text="{Binding Vpn.EditAddress}" Watermark="10.0.0.2/24" />
+                                    </Grid>
+                                    <Separator />
+                                    <TextBlock Text="Peer" FontWeight="SemiBold" />
+                                    <Grid ColumnDefinitions="100,*">
+                                        <TextBlock Grid.Column="0" Text="Public Key" />
+                                        <TextBox Grid.Column="1" Text="{Binding Vpn.EditPeerPublicKey}" />
+                                    </Grid>
+                                    <Grid ColumnDefinitions="100,*">
+                                        <TextBlock Grid.Column="0" Text="Endpoint" />
+                                        <TextBox Grid.Column="1" Text="{Binding Vpn.EditPeerEndpoint}" Watermark="1.2.3.4:51820" />
+                                    </Grid>
+                                    <Grid ColumnDefinitions="100,*">
+                                        <TextBlock Grid.Column="0" Text="Allowed IPs" />
+                                        <TextBox Grid.Column="1" Text="{Binding Vpn.EditPeerAllowedIPs}" Watermark="0.0.0.0/0" />
+                                    </Grid>
+                                    <Grid ColumnDefinitions="100,*,80">
+                                        <TextBlock Grid.Column="0" Text="Keepalive (s)" />
+                                        <TextBox Grid.Column="1" Text="{Binding Vpn.EditPeerKeepalive}" />
+                                        <TextBlock Grid.Column="2" Text="0 = off" FontSize="11" Opacity="0.6" VerticalAlignment="Center" Margin="4,0,0,0" />
+                                    </Grid>
+                                    <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
+                                        <Button Content="Save" Command="{Binding Vpn.SaveProfileCommand}" />
+                                        <Button Content="Cancel" Command="{Binding Vpn.CancelEditCommand}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
                 </TabControl>
             </DockPanel>
         </Window>

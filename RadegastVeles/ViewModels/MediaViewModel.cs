@@ -204,7 +204,8 @@ public partial class MediaViewModel : ObservableObject, IDisposable
     {
         lock (_parcelMusicLock)
         {
-            _parcelStream?.Volume = value / 100f;
+            if (_parcelStream != null)
+                _parcelStream.Volume = value / 100f;
         }
         ScheduleConfigSave();
     }

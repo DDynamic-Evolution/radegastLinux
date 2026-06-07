@@ -18,9 +18,11 @@
  */
 
 using System;
+using System.IO;
 using System.Linq;
 using Avalonia.Threading;
 using OpenMetaverse;
+using Radegast.Veles.VPN;
 using Radegast.Veles.ViewModels;
 using Radegast.Veles.Views;
 
@@ -68,9 +70,16 @@ public sealed class RadegastInstanceAvalonia : RadegastInstance
     /// <summary>The active voice session manager (set by MainViewModel after login).</summary>
     public VoiceViewModel? Voice { get; internal set; }
 
+    /// <summary>VPN tunnel manager (WireGuard helper).</summary>
+    public VpnManager Vpn { get; }
+
     internal RadegastInstanceAvalonia(string appName, GridClient client)
         : base(appName, client, new NetComAvalonia(client))
     {
+        // Initialize VPN helper
+        var helperPath = Path.Combine(AppContext.BaseDirectory, "vpn-helper");
+        Vpn = new VpnManager(helperPath);
+
         // Honour a user-configured texture-cache path stored by Preferences.
         var customCacheDir = GlobalSettings["texture_cache_dir"]?.AsString();
         if (!string.IsNullOrWhiteSpace(customCacheDir))
@@ -110,6 +119,21 @@ public sealed class RadegastInstanceAvalonia : RadegastInstance
         // Check mute list by object name
         if (null != Client.Self.MuteList.Find(m => m.Type == MuteType.ByName && m.Name == e.ObjectName)) return;
         if (null != Client.Self.MuteList.Find(m => m.Type == MuteType.Object && m.ID == e.TaskID)) return;
+
+        // RLV auto-accept / auto-deny
+        if (RLV.Enabled)
+        {
+            if (RLV.Permissions.IsAutoDenyPermissions())
+            {
+                Client.Self.ScriptQuestionReply(e.Simulator, e.ItemID, e.TaskID, 0);
+                return;
+            }
+            if (RLV.Permissions.IsAutoAcceptPermissions())
+            {
+                Client.Self.ScriptQuestionReply(e.Simulator, e.ItemID, e.TaskID, e.Questions);
+                return;
+            }
+        }
 
         var vm = NotificationViewModel.ForPermissions(
             Client, e.Simulator, e.TaskID, e.ItemID,
@@ -163,13 +187,27 @@ public sealed class RadegastInstanceAvalonia : RadegastInstance
                 break;
 
             case InstantMessageDialog.RequestTeleport:
-                NotificationReceived?.Invoke(this, NotificationViewModel.ForTeleportOffer(Client, msg));
-                MediaManager.PlayUISound(UISounds.Alert);
+                if (RLV.Enabled && RLV.Permissions.IsAutoAcceptTp(msg.FromAgentID.Guid))
+                {
+                    Client.Self.TeleportLureRespond(msg.FromAgentID, msg.IMSessionID, true);
+                }
+                else
+                {
+                    NotificationReceived?.Invoke(this, NotificationViewModel.ForTeleportOffer(Client, msg));
+                    MediaManager.PlayUISound(UISounds.Alert);
+                }
                 break;
 
             case InstantMessageDialog.RequestLure:
-                NotificationReceived?.Invoke(this, NotificationViewModel.ForTeleportRequest(Client, msg));
-                MediaManager.PlayUISound(UISounds.Alert);
+                if (RLV.Enabled && RLV.Permissions.IsAutoAcceptTpRequest(msg.FromAgentID.Guid))
+                {
+                    Client.Self.TeleportLureRespond(msg.FromAgentID, msg.IMSessionID, true);
+                }
+                else
+                {
+                    NotificationReceived?.Invoke(this, NotificationViewModel.ForTeleportRequest(Client, msg));
+                    MediaManager.PlayUISound(UISounds.Alert);
+                }
                 break;
 
             case InstantMessageDialog.MessageBox:
@@ -382,6 +420,7 @@ public sealed class RadegastInstanceAvalonia : RadegastInstance
         Client.Self.TeleportProgress -= Self_TeleportProgress;
         NetCom.InstantMessageReceived -= NetCom_InstantMessageReceived;
         NetCom.AlertMessageReceived -= NetCom_AlertMessageReceived;
+        Vpn.Dispose();
         ChatLog.Dispose();
         base.CleanUp();
     }

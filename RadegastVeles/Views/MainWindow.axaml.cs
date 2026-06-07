@@ -261,7 +261,8 @@ public partial class MainWindow : Window
         if (panel == null) return;
 
         // Replace with placeholder
-        tabItem?.Content = new TextBlock
+        if (tabItem != null)
+            tabItem.Content = new TextBlock
         {
             Text = $"{_panelTitles[tabIndex]} (Detached)",
             HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
@@ -289,7 +290,8 @@ public partial class MainWindow : Window
 
         var tabControl = this.FindControl<TabControl>("MainTabControl");
         var tabItem = tabControl?.Items[tabIndex] as TabItem;
-        tabItem?.Content = panel;
+        if (tabItem != null)
+            tabItem.Content = panel;
 
         _detachedPanels.Remove(tabIndex);
     }

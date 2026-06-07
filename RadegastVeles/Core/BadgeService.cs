@@ -61,7 +61,8 @@ public static class BadgeService
     /// </summary>
     public static void Update(int count)
     {
-        _window?.Icon = count > 0 ? CreateBadgedIcon(count) : _baseWindowIcon;
+        if (_window != null)
+            _window.Icon = count > 0 ? CreateBadgedIcon(count) : _baseWindowIcon;
     }
 
     private static WindowIcon CreateBadgedIcon(int count)

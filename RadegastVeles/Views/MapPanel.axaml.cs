@@ -75,7 +75,8 @@ public partial class MapPanel : UserControl
         _vm.GoToMyPositionCommand.Execute(null);
 
         // Apply the ViewModel's current zoom to the control (it starts at 1.0 by default)
-        _mapControl?.Zoom = 0.5 + (_vm.ZoomLevel / 100.0) * 9.5;
+        if (_mapControl != null)
+            _mapControl.Zoom = 0.5 + (_vm.ZoomLevel / 100.0) * 9.5;
 
         // Re-trigger VisibleRangeChanged so map blocks are requested now that handlers are wired
         _mapControl?.ForceRefresh();

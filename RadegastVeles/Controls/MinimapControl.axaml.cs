@@ -229,7 +229,8 @@ public partial class MinimapControl : UserControl
     private void Canvas_PointerExited(object? sender, PointerEventArgs e)
     {
         _pointerOnCanvas = false;
-        _hoverTooltip?.IsVisible = false;
+        if (_hoverTooltip != null)
+            _hoverTooltip.IsVisible = false;
     }
 
     private void Redraw()

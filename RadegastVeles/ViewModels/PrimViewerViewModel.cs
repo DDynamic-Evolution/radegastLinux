@@ -60,7 +60,8 @@ public partial class PrimViewerViewModel : ObservableObject, IDisposable
 
     partial void OnWireframeChanged(bool value)
     {
-        _viewport?.Wireframe = value;
+        if (_viewport != null)
+            _viewport.Wireframe = value;
     }
 
     public PrimViewerViewModel(RadegastInstanceAvalonia instance, uint rootLocalId)

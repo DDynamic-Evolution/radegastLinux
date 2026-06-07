@@ -27,6 +27,7 @@ using CommunityToolkit.Mvvm.Input;
 using OpenMetaverse.StructuredData;
 using Radegast.Media;
 using Radegast.Veles.Core;
+using Radegast.Veles.VPN;
 
 namespace Radegast.Veles.ViewModels;
 
@@ -113,6 +114,9 @@ public partial class PreferencesViewModel : ObservableObject, IDisposable
 
     /// <summary>Exposes the live VoiceViewModel for real-time bindings (mic level, test command).</summary>
     public VoiceViewModel? Voice => _voice;
+
+    // VPN
+    public VpnViewModel? Vpn { get; }
 
     // Grids
     public ObservableCollection<Grid> Grids { get; } = new();
@@ -226,12 +230,14 @@ public partial class PreferencesViewModel : ObservableObject, IDisposable
         _instance = instance;
         _media = media;
         _voice = voice;
+        Vpn = new VpnViewModel(instance, instance.Vpn);
         Load();
         _media.PropertyChanged += OnMediaPropertyChanged;
     }
 
     public void Dispose()
     {
+        Vpn?.Dispose();
         _media.PropertyChanged -= OnMediaPropertyChanged;
     }
 
@@ -241,6 +247,33 @@ public partial class PreferencesViewModel : ObservableObject, IDisposable
         {
             SoundSystemAvailable = _media.SoundSystemAvailable;
             SoundSystemStatus = _media.SoundSystemStatus;
+        }
+    }
+
+    // RLV
+    public bool RlvEnabled
+    {
+        get => _instance.RLV.Enabled;
+        set
+        {
+            if (_instance.RLV.Enabled != value)
+            {
+                _instance.RLV.Enabled = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public bool RlvDebugEnabled
+    {
+        get => _instance.RLV.EnabledDebugCommands;
+        set
+        {
+            if (_instance.RLV.EnabledDebugCommands != value)
+            {
+                _instance.RLV.EnabledDebugCommands = value;
+                OnPropertyChanged();
+            }
         }
     }
 

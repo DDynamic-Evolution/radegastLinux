@@ -20,12 +20,14 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LibreMetaverse;
+using LibreMetaverse.RLV;
 using OpenMetaverse;
 using Radegast.Veles.Core;
 
@@ -42,6 +44,8 @@ public partial class NearbyViewModel : ObservableObject, IDisposable, IChatConte
     private readonly List<string> _chatHistory = [];
     private int _chatPointer;
     private DispatcherTimer? _healthTimer;
+
+    private static readonly char[] InvalidRlvEmoteCharacters = { '(', ')', '"', '-', '*', '=', '_', '^' };
 
     [ObservableProperty]
     private string _chatInput = string.Empty;
@@ -235,6 +239,7 @@ public partial class NearbyViewModel : ObservableObject, IDisposable, IChatConte
 
     public void ProcessChatInput(string input, ChatType type)
     {
+        bool isEmote = false;
         if (string.IsNullOrEmpty(input)) return;
         _chatHistory.Add(input);
         _chatPointer = _chatHistory.Count;
@@ -244,6 +249,11 @@ public partial class NearbyViewModel : ObservableObject, IDisposable, IChatConte
         if (_instance.GlobalSettings["mu_emotes"].AsBoolean() && msg.StartsWith(':'))
         {
             msg = "/me " + msg[1..];
+            isEmote = true;
+        }
+        else if (msg.StartsWith("/me", StringComparison.OrdinalIgnoreCase))
+        {
+            isEmote = true;
         }
 
         int ch = 0;
@@ -260,6 +270,50 @@ public partial class NearbyViewModel : ObservableObject, IDisposable, IChatConte
         }
         else
         {
+            #region RLV
+            if (_instance.RLV.Enabled)
+            {
+                if (isEmote)
+                {
+                    if (_instance.RLV.Restrictions.FindRestrictions("RedirEmote").FirstOrDefault() is { } redirEmote
+                        && redirEmote.Args.FirstOrDefault() is int emoteChannel)
+                    {
+                        ch = emoteChannel;
+                    }
+                }
+                else
+                {
+                    if (_instance.RLV.Restrictions.FindRestrictions("RedirChat").FirstOrDefault() is { } redirChat
+                        && redirChat.Args.FirstOrDefault() is int chatChannel)
+                    {
+                        ch = chatChannel;
+                    }
+                }
+
+                if ((type == ChatType.Normal || type == ChatType.Shout) && !_instance.RLV.Permissions.CanChatNormal())
+                {
+                    type = ChatType.Whisper;
+                }
+                else if (type == ChatType.Shout && !_instance.RLV.Permissions.CanChatShout())
+                {
+                    type = ChatType.Normal;
+                }
+                else if (type == ChatType.Whisper && !_instance.RLV.Permissions.CanChatWhisper())
+                {
+                    type = ChatType.Normal;
+                }
+
+                if (ch == 0 && !_instance.RLV.Permissions.CanSendChat())
+                {
+                    var hasValidCharacters = input.IndexOfAny(InvalidRlvEmoteCharacters) == -1;
+                    if (!hasValidCharacters || !input.StartsWith("/", StringComparison.OrdinalIgnoreCase))
+                    {
+                        msg = "...";
+                    }
+                }
+            }
+            #endregion
+
             _instance.GestureManager.TryPreProcessChatMessage(msg, out var processedMessage, out _);
             processedMessage = processedMessage?.Trim();
             if (!string.IsNullOrEmpty(processedMessage))

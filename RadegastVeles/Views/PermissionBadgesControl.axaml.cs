@@ -75,6 +75,7 @@ public partial class PermissionBadgesControl : UserControl
     private void UpdateBadge(string name, bool visible)
     {
         var badge = this.FindControl<Border>(name);
-        badge?.IsVisible = visible;
+        if (badge != null)
+            badge.IsVisible = visible;
     }
 }

@@ -377,8 +377,10 @@ public partial class InventoryPanel : UserControl
 
         _activeEditorPanel = editorPanel;
         var editorArea = this.FindControl<ContentControl>("EditorArea");
-        editorArea?.Content = editorPanel;
-        _vm?.HasActiveEditor = true;
+        if (editorArea != null)
+            editorArea.Content = editorPanel;
+        if (_vm != null)
+            _vm.HasActiveEditor = true;
     }
 
     private void OnEditorDetachRequested(Control editorPanel)
@@ -386,8 +388,10 @@ public partial class InventoryPanel : UserControl
         if (_activeHostWindow != null) return;
 
         var editorArea = this.FindControl<ContentControl>("EditorArea");
-        editorArea?.Content = null;
-        _vm?.HasActiveEditor = false;
+        if (editorArea != null)
+            editorArea.Content = null;
+        if (_vm != null)
+            _vm.HasActiveEditor = false;
 
         var title = editorPanel switch
         {
@@ -423,10 +427,12 @@ public partial class InventoryPanel : UserControl
         if (panel == null) return;
 
         _activeEditorPanel = panel;
-        _vm?.HasActiveEditor = true;
+        if (_vm != null)
+            _vm.HasActiveEditor = true;
 
         var editorArea = this.FindControl<ContentControl>("EditorArea");
-        editorArea?.Content = panel;
+        if (editorArea != null)
+            editorArea.Content = panel;
     }
 
     private void OnEditorCloseRequested() => CloseActiveEditor();
@@ -442,10 +448,12 @@ public partial class InventoryPanel : UserControl
         }
 
         var editorArea = this.FindControl<ContentControl>("EditorArea");
-        editorArea?.Content = null;
+        if (editorArea != null)
+            editorArea.Content = null;
 
         _activeEditorPanel = null;
-        _vm?.HasActiveEditor = false;
+        if (_vm != null)
+            _vm.HasActiveEditor = false;
     }
 
     // ── Drag source ──────────────────────────────────────────────────────────

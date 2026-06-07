@@ -39,7 +39,8 @@ public partial class CrashWindow : Window
         base.OnOpened(e);
 
         var txt = this.FindControl<TextBlock>("TxtException");
-        txt?.Text = _text;
+        if (txt != null)
+            txt.Text = _text;
 
         var btnClose = this.FindControl<Button>("BtnClose");
         if (btnClose != null) btnClose.Click += (_, _) => Close();
