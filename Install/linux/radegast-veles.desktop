@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Radegast Veles
+Comment=Lightweight Second Life and OpenSimulator client
+Exec=__INSTALL_DIR__/RadegastVeles
+Icon=radegast-veles
+Terminal=false
+Type=Application
+Categories=Game;Network;Chat;
+StartupNotify=true
+StartupWMClass=RadegastVeles
