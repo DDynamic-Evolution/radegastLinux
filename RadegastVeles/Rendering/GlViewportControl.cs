@@ -275,18 +275,26 @@ public class GlViewportControl : Panel
         try
         {
             GL.LoadBindings(new AvaloniaGlBindings(gl));
+
+            // Detect ES vs desktop GL before compiling shaders so we can
+            // use the correct #version directive. GL ES (ANGLE) also
+            // doesn't expose PolygonMode.
+            var versionStr = GL.GetString(StringName.Version) ?? "";
+            bool isEs = versionStr.Contains("OpenGL ES");
+            _supportsPolygonMode = !isEs;
+
+            string vertHeader = isEs ? "#version 300 es\n" : "#version 330\n";
+            string fragHeader = isEs ? "#version 300 es\nprecision highp float;\n" : "#version 330\n";
+
             _primShader = GlShader.Compile(
-                ShaderLoader.Load("prim.vert"),
-                ShaderLoader.Load("prim.frag"));
+                vertHeader + ShaderLoader.Load("prim.vert"),
+                fragHeader + ShaderLoader.Load("prim.frag"));
             _wireShader = GlShader.Compile(
-                ShaderLoader.Load("wireframe.vert"),
-                ShaderLoader.Load("wireframe.frag"));
+                vertHeader + ShaderLoader.Load("wireframe.vert"),
+                fragHeader + ShaderLoader.Load("wireframe.frag"));
             _pickShader = GlShader.Compile(
-                ShaderLoader.Load("wireframe.vert"),
-                ShaderLoader.Load("picking.frag"));
-            // GL ES (ANGLE) doesn't expose PolygonMode; check version string.
-            var version = GL.GetString(StringName.Version) ?? "";
-            _supportsPolygonMode = !version.Contains("OpenGL ES");
+                vertHeader + ShaderLoader.Load("wireframe.vert"),
+                fragHeader + ShaderLoader.Load("picking.frag"));
         }
         catch (Exception ex)
         {
