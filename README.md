@@ -1,15 +1,15 @@
 ```
-██████╗  █████╗ ██████╗ ███████╗ ██████╗  █████╗ ███████╗████████╗    
-██╔══██╗██╔══██╗██╔══██╗██╔════╝██╔════╝ ██╔══██╗██╔════╝╚══██╔══╝    
-██████╔╝███████║██║  ██║█████╗  ██║  ███╗███████║███████╗   ██║       
-██╔══██╗██╔══██║██║  ██║██╔══╝  ██║   ██║██╔══██║╚════██║   ██║       
-██║  ██║██║  ██║██████╔╝███████╗╚██████╔╝██║  ██║███████║   ██║       
-╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝   ╚═╝     
+██████╗  █████╗ ██████╗ ███████╗ ██████╗  █████╗ ███████╗████████╗    ██╗   ██╗███████╗██╗     ███████╗███████╗
+██╔══██╗██╔══██╗██╔══██╗██╔════╝██╔════╝ ██╔══██╗██╔════╝╚══██╔══╝    ██║   ██║██╔════╝██║     ██╔════╝██╔════╝
+██████╔╝███████║██║  ██║█████╗  ██║  ███╗███████║███████╗   ██║       ██║   ██║█████╗  ██║     ███████╗███████╗
+██╔══██╗██╔══██║██║  ██║██╔══╝  ██║   ██║██╔══██║╚════██║   ██║       ╚██╗ ██╔╝██╔══╝  ██║     ╚════██║╚════██║
+██║  ██║██║  ██║██████╔╝███████╗╚██████╔╝██║  ██║███████║   ██║        ╚████╔╝ ███████╗███████╗███████║███████║
+╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝   ╚═╝         ╚═══╝  ╚══════╝╚══════╝╚══════╝╚══════╝
 ```
-Radegast Metaverse Client
+RadegastVeles – Avalonia NG Metaverse Client
 
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://github.com/cinderblocks/radegast/blob/master/LICENSE.txt)
-[![Download .deb](https://img.shields.io/badge/Download-.deb-brightgreen)](https://github.com/DDynamic-Evolution/radegastLinux/releases/download/v0.1.2/radegast-veles_0.1.2_amd64.deb)
+[![Download .deb](https://img.shields.io/badge/Download-.deb-brightgreen)](https://github.com/DDynamic-Evolution/radegastLinux/releases/download/v0.1.3/radegast-veles_0.1.3_amd64.deb)
 
 ## Getting started
 
@@ -19,8 +19,7 @@ There is a strong focus on accessability and non-3D interaction.
 
 ### Prerequisites
 
-- **Radegast (legacy):** .NET Framework 4.8 or compatible Mono version
-- **RadegastVeles (Avalonia/NG):** [.NET 8.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+- **[.NET 8.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)**
 
 ### Building for Linux (native)
 
@@ -112,9 +111,6 @@ RLV support is built into RadegastVeles and can be enabled in Preferences → RL
 - **`@denypermission`** – script permission dialogs are automatically denied
 - **`@accepttp` / `@accepttprequest`** – teleport offers/requests are automatically accepted
 
-### Building for Windows (legacy)
-Open `Radegast.sln` in Visual Studio 2022+ and build for ReleaseWindows.
-
 ### Contributing
 
 Pull requests are nice. Try not to be a dick, and we will all get along just fine.
@@ -125,13 +121,13 @@ Pull requests are nice. Try not to be a dick, and we will all get along just fin
 
 * **Latif Khalifa** In loving memory
 
-### Linux maintainer:
+### Maintainer:
 
 * **Miko Astral**
 
 ## License
 
-**Radegast Velese Metaverse Client**
+**RadegastVeles Metaverse Client**
 * Copyright © 2009–2014, Radegast Development Team
 * Copyright © 2025–2026, Disvail Dynamic
 * All rights reserved.
