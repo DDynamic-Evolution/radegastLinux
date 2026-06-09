@@ -69,6 +69,26 @@ public partial class ChatPanel : UserControl
             chatInput.Focus();
         }
 
+        // Wire emoticon picker
+        var emoticonPicker = this.FindControl<EmoticonPicker>("EmoticonPicker");
+        if (emoticonPicker != null)
+        {
+            emoticonPicker.EmoticonSelected += (sender, emoji) =>
+            {
+                if (chatInput == null || _vm == null) return;
+
+                var text = _vm.ChatInput ?? "";
+                var caretIndex = chatInput.CaretIndex;
+
+                // Insert emoji at cursor position
+                _vm.ChatInput = text.Insert(caretIndex, emoji);
+
+                // Move caret after the inserted emoji
+                chatInput.CaretIndex = caretIndex + emoji.Length;
+                chatInput.Focus();
+            };
+        }
+
         // Auto-scroll chat log
         var chatLog = this.FindControl<ListBox>("ChatLog");
         if (chatLog != null && _vm.ChatLines is INotifyCollectionChanged ncc)
@@ -131,11 +151,11 @@ public partial class ChatPanel : UserControl
                 _vm.SendShoutCommand.Execute(null);
                 e.Handled = true;
                 break;
-            case Key.Up when e.KeyModifiers == KeyModifiers.Control:
+            case Key.Up when e.KeyModifiers == KeyModifiers.None && !_vm.ChatInput.Contains('\n'):
                 _vm.ChatHistoryPrev();
                 e.Handled = true;
                 break;
-            case Key.Down when e.KeyModifiers == KeyModifiers.Control:
+            case Key.Down when e.KeyModifiers == KeyModifiers.None && !_vm.ChatInput.Contains('\n'):
                 _vm.ChatHistoryNext();
                 e.Handled = true;
                 break;

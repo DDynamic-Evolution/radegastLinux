@@ -1,0 +1,38 @@
+id: io.github.ddynamic_evolution.RadegastVeles
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.dotnet8
+command: RadegastVeles
+finish-args:
+  - --socket=x11
+  - --socket=wayland
+  - --share=ipc
+  - --share=network
+  - --device=dri
+
+modules:
+  - name: radegast-veles
+    buildsystem: simple
+    build-options:
+      append-path: /usr/lib/sdk/dotnet8/bin
+      env:
+        DOTNET_ROOT: /usr/lib/sdk/dotnet8
+      build-args:
+        - --share=network
+    build-commands:
+      - dotnet restore RadegastVeles/RadegastVeles.csproj
+      - dotnet publish RadegastVeles/RadegastVeles.csproj -c Release -r linux-x64
+        --self-contained true -o /app/bin /p:DebugType=none
+        /p:DebugSymbols=false
+      - cp Radegast.Core/assemblies/libfmod.so.12.10 /app/bin/libfmod.so
+      - python3 Install/flatpak/fix_fmod.py
+      - rm -f /app/bin/*.pdb /app/bin/*.xml
+      - install -Dm644 Install/flatpak/io.github.ddynamic_evolution.RadegastVeles.desktop
+        /app/share/applications/io.github.ddynamic_evolution.RadegastVeles.desktop
+      - install -Dm644 Install/flatpak/radegast-veles.png
+        /app/share/icons/hicolor/128x128/apps/io.github.ddynamic_evolution.RadegastVeles.png
+    sources:
+      - type: dir
+        path: ../../

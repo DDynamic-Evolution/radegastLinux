@@ -62,6 +62,7 @@
             <TreeView x:Name="InvTreeView"
                       ItemsSource="{Binding RootNodes}"
                       SelectedItem="{Binding SelectedNode}"
+                      SelectionMode="{x:Static SelectionMode.Multiple}"
                       IsVisible="{Binding !HasSearchResults}"
                       AutomationProperties.Name="Inventory tree"
                       Margin="4,0">

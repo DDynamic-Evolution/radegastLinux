@@ -72,6 +72,8 @@ public partial class RlvViewModel : ObservableObject, IDisposable
     public ObservableCollection<RlvSourceItem> Sources { get; } = new();
     public ObservableCollection<RlvLogEntry> LogEntries { get; } = new();
     public ObservableCollection<TrustedAvatarItem> TrustedAvatars { get; } = new();
+    public ObservableCollection<RlvDebugPermissionCheck> DebugPermissionChecks { get; } = new();
+    public ObservableCollection<RlvDebugCommand> DebugCommandLog { get; } = new();
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(RemoveTrustedCommand))]
@@ -358,5 +360,35 @@ public class TrustedAvatarItem
         Id = id;
         Name = name;
         Mode = mode;
+    }
+}
+
+public class RlvDebugPermissionCheck
+{
+    public DateTime Timestamp { get; }
+    public string Check { get; }
+    public string Result { get; }
+    public Avalonia.Media.IBrush ResultColor { get; }
+
+    public RlvDebugPermissionCheck(DateTime timestamp, string check, bool result)
+    {
+        Timestamp = timestamp;
+        Check = check;
+        Result = result ? "Allowed" : "Denied";
+        ResultColor = result 
+            ? new Avalonia.Media.SolidColorBrush(Avalonia.Media.Colors.Green)
+            : new Avalonia.Media.SolidColorBrush(Avalonia.Media.Colors.Red);
+    }
+}
+
+public class RlvDebugCommand
+{
+    public DateTime Timestamp { get; }
+    public string Command { get; }
+
+    public RlvDebugCommand(DateTime timestamp, string command)
+    {
+        Timestamp = timestamp;
+        Command = command;
     }
 }

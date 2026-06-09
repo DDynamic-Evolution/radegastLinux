@@ -19,12 +19,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using OpenMetaverse.StructuredData;
 using Radegast.Veles.Core;
 using Radegast.Veles.ViewModels;
 using Radegast.Veles.Views;
@@ -37,6 +39,7 @@ public class App : Application
     private readonly AgentSessionManager _sessionManager = new();
     private readonly Dictionary<Guid, MainWindow> _agentWindows = new();
     private LoginWindow? _loginWindow;
+    private DashboardWindow? _dashboardWindow;
     private TrayIcon? _trayIcon;
 
     public override void Initialize()
@@ -81,6 +84,20 @@ public class App : Application
         _loginWindow.Show();
     }
 
+    private void ShowDashboard()
+    {
+        if (_dashboardWindow is { IsVisible: true })
+        {
+            _dashboardWindow.Activate();
+            return;
+        }
+
+        var vm = new DashboardViewModel(_sessionManager);
+        _dashboardWindow = new DashboardWindow(vm);
+        _dashboardWindow.Closed += (_, _) => _dashboardWindow = null;
+        _dashboardWindow.Show();
+    }
+
     private void OnLoginSucceeded(object? sender, AgentLoginSucceededEventArgs e)
     {
         _loginWindow = null;
@@ -88,12 +105,30 @@ public class App : Application
         var session = _sessionManager.AddSession(e.Instance);
         var mainWindow = new MainWindow(session);
 
+        // Initialize map tile cache
+        var settings = e.Instance.GlobalSettings;
+        var mapCacheEnabled = settings["map_cache_enabled"].Type != OSDType.Unknown
+            ? settings["map_cache_enabled"].AsBoolean() : true;
+        var mapCacheMaxSizeMB = settings["map_cache_max_size_mb"].Type != OSDType.Unknown
+            ? settings["map_cache_max_size_mb"].AsInteger() : 500;
+        var mapCacheTtlDays = settings["map_cache_ttl_days"].Type != OSDType.Unknown
+            ? settings["map_cache_ttl_days"].AsInteger() : 30;
+        var mapCacheDir = Path.Combine(e.Instance.UserDir, "mapcache");
+        MapTileCache.Initialize(mapCacheDir, mapCacheEnabled, mapCacheMaxSizeMB * 1024 * 1024, mapCacheTtlDays);
+
         var capturedSession = session;
         mainWindow.LogoutRequested += (_, _) => OnLogoutRequested(capturedSession);
 
         _agentWindows[session.Id] = mainWindow;
         mainWindow.Show();
         mainWindow.Activate();
+
+        if (e.Instance.GlobalSettings["auto_check_updates"].AsBoolean())
+            _ = AboutWindow.CheckForUpdatesAsync(mainWindow);
+
+        // Subscribe to friend events for tray tooltip updates
+        SubscribeToSessionFriends(session);
+        UpdateTrayTooltip();
 
         RebuildTrayMenu();
     }
@@ -107,6 +142,7 @@ public class App : Application
         }
 
         _sessionManager.RemoveSession(session);
+        UpdateTrayTooltip();
         RebuildTrayMenu();
 
         if (_sessionManager.Sessions.Count == 0)
@@ -162,16 +198,75 @@ public class App : Application
         loginItem.Click += (_, _) => ShowLogin();
         menu.Items.Add(loginItem);
 
+        var dashboardItem = new NativeMenuItem("Dashboard");
+        dashboardItem.Click += (_, _) => ShowDashboard();
+        menu.Items.Add(dashboardItem);
+
+        menu.Items.Add(new NativeMenuItemSeparator());
+
+        var updateItem = new NativeMenuItem("Check for Updates...");
+        updateItem.Click += async (_, _) =>
+        {
+            var lifetime = ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
+            var parent = lifetime?.Windows.FirstOrDefault(w => w.IsVisible);
+            if (parent != null)
+                await AboutWindow.CheckForUpdatesAsync(parent);
+        };
+        menu.Items.Add(updateItem);
+
         menu.Items.Add(new NativeMenuItemSeparator());
 
         var exitItem = new NativeMenuItem("Exit");
-        exitItem.Click += (_, _) => Exit();
+        exitItem.Click += (_, _) => ExitApplication();
         menu.Items.Add(exitItem);
 
         _trayIcon.Menu = menu;
     }
 
-    private void Exit()
+    private void SubscribeToSessionFriends(AgentSession session)
+    {
+        session.Instance.Client.Friends.FriendOnline += (_, _) => UpdateTrayTooltip();
+        session.Instance.Client.Friends.FriendOffline += (_, _) => UpdateTrayTooltip();
+        session.Instance.Client.Friends.FriendshipTerminated += (_, _) => UpdateTrayTooltip();
+        session.Instance.Client.Friends.FriendNames += (_, _) => UpdateTrayTooltip();
+    }
+
+    private void UpdateTrayTooltip()
+    {
+        if (_trayIcon == null) return;
+
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            int totalOnline = 0;
+            int totalFriends = 0;
+            int connectedSessions = 0;
+
+            foreach (var session in _sessionManager.Sessions)
+            {
+                if (!session.Instance.Client.Network.Connected) continue;
+                connectedSessions++;
+
+                var friendList = session.Instance.Client.Friends.FriendList;
+                totalFriends += friendList.Count;
+                totalOnline += friendList.Values.Count(f => f.IsOnline);
+            }
+
+            if (connectedSessions == 0)
+            {
+                _trayIcon.ToolTipText = "Radegast Veles - Not connected";
+            }
+            else if (connectedSessions == 1)
+            {
+                _trayIcon.ToolTipText = $"Radegast Veles - {totalOnline}/{totalFriends} friends online";
+            }
+            else
+            {
+                _trayIcon.ToolTipText = $"Radegast Veles ({connectedSessions} sessions) - {totalOnline}/{totalFriends} friends online";
+            }
+        });
+    }
+
+    public void ExitApplication()
     {
         foreach (var window in _agentWindows.Values.ToArray())
         {

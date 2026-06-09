@@ -100,4 +100,7 @@ public partial class LoginWindow : Window
 
     private void OnIssueTrackerClick(object? sender, RoutedEventArgs e) =>
         AboutWindow.OpenUrl("https://github.com/DDynamic-Evolution/radegastLinux/issues");
+
+    private async void OnCheckForUpdatesClick(object? sender, RoutedEventArgs e) =>
+        await AboutWindow.CheckForUpdatesAsync(this);
 }

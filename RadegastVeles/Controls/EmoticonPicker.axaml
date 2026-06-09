@@ -1,0 +1,18 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:Radegast.Veles.Controls"
+             x:Class="Radegast.Veles.Controls.EmoticonPicker"
+             AutomationProperties.Name="Emoticon picker">
+
+    <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+            BorderThickness="1"
+            CornerRadius="4"
+            Padding="8"
+            Width="280"
+            MaxHeight="200">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <WrapPanel x:Name="EmoticonPanel" />
+        </ScrollViewer>
+    </Border>
+</UserControl>

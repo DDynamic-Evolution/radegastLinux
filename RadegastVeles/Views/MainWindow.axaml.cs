@@ -24,6 +24,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using OpenMetaverse.StructuredData;
 using Radegast.Veles.Core;
 using Radegast.Veles.ViewModels;
 namespace Radegast.Veles.Views;
@@ -47,6 +48,12 @@ public partial class MainWindow : Window
         DataContext = _vm;
         InitializeComponent();
 
+        // Event-Handler für Commands registrieren
+        _vm.OpenPreferencesRequested += OnOpenPreferencesRequested;
+        _vm.LogoutRequested += OnLogoutRequestedFromVM;
+        _vm.HideWindowRequested += OnHideWindowRequested;
+        _vm.OpenLogViewerRequested += OnOpenLogViewerRequested;
+
         Loaded += OnWindowLoaded;
     }
 
@@ -55,6 +62,34 @@ public partial class MainWindow : Window
         VelesNotificationService.Initialize(this);
         BadgeService.Initialize(this);
         _vm.IM.PropertyChanged += OnIMPropertyChanged;
+
+        RestoreWindowState();
+    }
+
+    private void RestoreWindowState()
+    {
+        var s = _session.Instance.GlobalSettings;
+        if (s["mainwindow_maximized"].AsBoolean())
+            WindowState = WindowState.Maximized;
+        if (s["mainwindow_width"].Type != OSDType.Unknown)
+            Width = s["mainwindow_width"].AsInteger();
+        if (s["mainwindow_height"].Type != OSDType.Unknown)
+            Height = s["mainwindow_height"].AsInteger();
+        if (s["mainwindow_x"].Type != OSDType.Unknown && s["mainwindow_y"].Type != OSDType.Unknown)
+            Position = new PixelPoint(s["mainwindow_x"].AsInteger(), s["mainwindow_y"].AsInteger());
+    }
+
+    private void SaveWindowState()
+    {
+        var s = _session.Instance.GlobalSettings;
+        s["mainwindow_maximized"] = OSD.FromBoolean(WindowState == WindowState.Maximized);
+        if (WindowState == WindowState.Normal)
+        {
+            s["mainwindow_x"] = OSD.FromInteger(Position.X);
+            s["mainwindow_y"] = OSD.FromInteger(Position.Y);
+            s["mainwindow_width"] = OSD.FromInteger((int)Width);
+            s["mainwindow_height"] = OSD.FromInteger((int)Height);
+        }
     }
 
     private void OnIMPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -65,10 +100,22 @@ public partial class MainWindow : Window
 
     protected override void OnClosing(WindowClosingEventArgs e)
     {
+        SaveWindowState();
+
         if (!_forceClose)
         {
+            if (_session.Instance.GlobalSettings["minimize_to_tray"].AsBoolean())
+            {
+                Hide();
+                e.Cancel = true;
+                return;
+            }
+
+            if (Application.Current is App app)
+            {
+                app.ExitApplication();
+            }
             e.Cancel = true;
-            Hide();
             return;
         }
         base.OnClosing(e);
@@ -77,6 +124,10 @@ public partial class MainWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         _vm.IM.PropertyChanged -= OnIMPropertyChanged;
+        _vm.OpenPreferencesRequested -= OnOpenPreferencesRequested;
+        _vm.LogoutRequested -= OnLogoutRequestedFromVM;
+        _vm.HideWindowRequested -= OnHideWindowRequested;
+        _vm.OpenLogViewerRequested -= OnOpenLogViewerRequested;
         base.OnClosed(e);
     }
 
@@ -88,7 +139,7 @@ public partial class MainWindow : Window
 
     public void ShowTab(int index)
     {
-        _vm.ShowTab(index);
+        _vm.ShowTabCommand.Execute(index);
         Show();
         Activate();
     }
@@ -100,15 +151,6 @@ public partial class MainWindow : Window
 
     private void OnShowSearchClick(object? sender, RoutedEventArgs e)
         => _session.Instance?.ShowDirectorySearch();
-
-    private void OnShowNearbyClick(object? sender, RoutedEventArgs e) => _vm.ShowTab(0);
-    private void OnShowIMClick(object? sender, RoutedEventArgs e) => _vm.ShowTab(1);
-    private void OnShowMapClick(object? sender, RoutedEventArgs e) => _vm.ShowTab(2);
-    private void OnShowObjectsClick(object? sender, RoutedEventArgs e) => _vm.ShowTab(3);
-    private void OnShowInventoryClick(object? sender, RoutedEventArgs e) => _vm.ShowTab(4);
-    private void OnShowFriendsClick(object? sender, RoutedEventArgs e) => _vm.ShowTab(5);
-    private void OnShowGroupsClick(object? sender, RoutedEventArgs e) => _vm.ShowTab(6);
-    private void OnShowMediaClick(object? sender, RoutedEventArgs e) => _vm.ShowTab(7);
 
     private void OnUploadImageClick(object? sender, RoutedEventArgs e)
     {
@@ -138,13 +180,6 @@ public partial class MainWindow : Window
         window.Show();
     }
 
-    private async void OnPreferencesClick(object? sender, RoutedEventArgs e)
-    {
-        var vm = new PreferencesViewModel(_session.Instance, _vm.Media, _vm.Rlv);
-        var window = new PreferencesWindow { DataContext = vm };
-        await window.ShowDialog(this);
-    }
-
     private void OnShowLandInfoClick(object? sender, RoutedEventArgs e)
         => _session.Instance.ShowLandProfile();
 
@@ -156,16 +191,6 @@ public partial class MainWindow : Window
 
     private void OnShowEstateInfoClick(object? sender, RoutedEventArgs e)
         => _session.Instance.ShowEstateProfile();
-
-    private void OnLogoutClick(object? sender, RoutedEventArgs e)
-    {
-        LogoutRequested?.Invoke(this, EventArgs.Empty);
-    }
-
-    private void OnHideClick(object? sender, RoutedEventArgs e)
-    {
-        Hide();
-    }
 
     private void OnExitClick(object? sender, RoutedEventArgs e)
     {
@@ -180,7 +205,38 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnLogViewerClick(object? sender, RoutedEventArgs e)
+    private void OnAboutClick(object? sender, RoutedEventArgs e)
+    {
+        new AboutWindow().ShowDialog(this);
+    }
+
+    private void OnWebsiteClick(object? sender, RoutedEventArgs e) =>
+        AboutWindow.OpenUrl("https://radegast.life/");
+
+    private void OnIssueTrackerClick(object? sender, RoutedEventArgs e) =>
+        AboutWindow.OpenUrl("https://github.com/DDynamic-Evolution/radegastLinux/issues");
+
+    private async void OnCheckForUpdatesClick(object? sender, RoutedEventArgs e) =>
+        await AboutWindow.CheckForUpdatesAsync(this);
+
+    private async void OnOpenPreferencesRequested(object? sender, EventArgs e)
+    {
+        var vm = new PreferencesViewModel(_session.Instance, _vm.Media, _vm.Rlv);
+        var window = new PreferencesWindow { DataContext = vm };
+        await window.ShowDialog(this);
+    }
+
+    private void OnLogoutRequestedFromVM(object? sender, EventArgs e)
+    {
+        LogoutRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnHideWindowRequested(object? sender, EventArgs e)
+    {
+        Hide();
+    }
+
+    private void OnOpenLogViewerRequested(object? sender, EventArgs e)
     {
         if (_logViewerWindow is { IsVisible: true })
         {
@@ -192,15 +248,4 @@ public partial class MainWindow : Window
         _logViewerWindow.Closed += (_, _) => _logViewerWindow = null;
         _logViewerWindow.Show();
     }
-
-    private void OnAboutClick(object? sender, RoutedEventArgs e)
-    {
-        new AboutWindow().ShowDialog(this);
-    }
-
-    private void OnWebsiteClick(object? sender, RoutedEventArgs e) =>
-        AboutWindow.OpenUrl("https://radegast.life/");
-
-    private void OnIssueTrackerClick(object? sender, RoutedEventArgs e) =>
-        AboutWindow.OpenUrl("https://github.com/DDynamic-Evolution/radegastLinux/issues");
 }

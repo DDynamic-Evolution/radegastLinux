@@ -1,0 +1,36 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Radegast.Veles.ViewModels"
+        x:Class="Radegast.Veles.Views.DashboardWindow"
+        x:DataType="vm:DashboardViewModel"
+        Title="Radegast Veles - Dashboard"
+        Width="600" Height="400"
+        MinWidth="500" MinHeight="300"
+        WindowStartupLocation="CenterScreen">
+
+    <DockPanel Margin="10">
+        <TextBlock DockPanel.Dock="Top" Text="Active Sessions" FontSize="18" FontWeight="Bold" Margin="0,0,0,10" />
+
+        <ListBox ItemsSource="{Binding Sessions}" SelectedItem="{Binding SelectedSession}" Margin="0,0,0,10">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:SessionInfo">
+                    <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="5">
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{Binding AgentName}" FontWeight="Bold" FontSize="14" />
+                            <TextBlock Text="{Binding GridName}" FontSize="11" Opacity="0.7" />
+                        </StackPanel>
+                        <TextBlock Grid.Column="1" Text="{Binding RegionName}" VerticalAlignment="Center" Margin="10,0" />
+                        <TextBlock Grid.Column="2" Text="{Binding FriendsText}" VerticalAlignment="Center" Margin="10,0" />
+                        <TextBlock Grid.Column="3" Text="{Binding StatusText}" VerticalAlignment="Center"
+                                   Foreground="Green" />
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+            <Button Content="Refresh" Click="OnRefreshClick" />
+            <Button Content="Close" Click="OnCloseClick" />
+        </StackPanel>
+    </DockPanel>
+</Window>

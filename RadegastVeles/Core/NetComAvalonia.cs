@@ -22,6 +22,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using Avalonia.Threading;
 using OpenMetaverse;
+using Radegast;
 
 namespace Radegast.Veles.Core;
 
@@ -153,6 +154,10 @@ public sealed class NetComAvalonia : INetCom
         var loginParams = Client.Network.DefaultLoginParams(
             LoginOptions.FirstName!, LoginOptions.LastName!, password,
             LoginOptions.Channel, LoginOptions.Version);
+
+        HWSpoof.SetUsername(LoginOptions.FullName);
+        loginParams.ID0 = HWSpoof.GetId0();
+        loginParams.MAC = HWSpoof.GetMac();
 
         Grid = LoginOptions.Grid!;
         loginParams.Start = startLocation;

@@ -5,6 +5,12 @@
 
     <Application.Styles>
         <FluentTheme />
+        <Style Selector="TextBlock">
+            <Setter Property="FontFamily" Value="Ubuntu Sans, Noto Color Emoji, Noto Sans CJK JP" />
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="FontFamily" Value="Ubuntu Sans, Noto Color Emoji, Noto Sans CJK JP" />
+        </Style>
         <Style Selector="Button.hyperlink">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />

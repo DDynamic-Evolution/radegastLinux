@@ -20,3 +20,5 @@ ProductInstallFiles.wxs
 .DS_Store
 AGENTS.md
 *.deb
+/.flatpak-builder/
+/build/

@@ -417,6 +417,15 @@ public partial class NearbyViewModel : ObservableObject, IDisposable, IChatConte
     {
         if (e.Message == null) return;
 
+        // Filter muted avatars/objects
+        if (Client.Self.MuteList.Values.Any(m =>
+            (m.Type == MuteType.Resident && m.ID == e.SourceID) ||
+            (m.Type == MuteType.Object && m.ID == e.SourceID) ||
+            (m.Type == MuteType.ByName && m.Name == e.FromName)))
+        {
+            return;
+        }
+
         // Determine style
         var lineType = e.SourceType switch
         {

@@ -26,6 +26,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenMetaverse;
+using Radegast.Veles.Controls;
 using Radegast.Veles.Core;
 
 namespace Radegast.Veles.ViewModels;
@@ -80,6 +81,7 @@ public partial class MapViewModel : ObservableObject, IDisposable
     // Map data exposed for the grid map control
     public ObservableCollection<MapRegionEntry> MapRegions { get; } = [];
     public ObservableCollection<MapAvatarEntry> MapAvatars { get; } = [];
+    public ObservableCollection<MapFriendEntry> MapFriends { get; } = [];
 
     /// <summary>
     /// Raised when the map center should change (region grid X, region grid Y, local X, local Y).
@@ -513,6 +515,18 @@ public partial class MapViewModel : ObservableObject, IDisposable
             Utils.LongToUInts(e.RegionHandle, out rx, out ry);
             rx /= 256;
             ry /= 256;
+
+            // Add/update friend marker on map
+            var friendName = Client.Friends.FriendList.TryGetValue(e.AgentID, out var friendInfo) 
+                ? friendInfo.Name 
+                : e.AgentID.ToString();
+            
+            var existingFriend = MapFriends.FirstOrDefault(f => f.Id == e.AgentID);
+            if (existingFriend != null)
+            {
+                MapFriends.Remove(existingFriend);
+            }
+            MapFriends.Add(new MapFriendEntry(e.AgentID, friendName, rx, ry, (uint)CoordX, (uint)CoordY));
 
             // Try to find region name from known handles
             lock (_regionHandles)

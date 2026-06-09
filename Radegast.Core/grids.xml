@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<llsd>
+  <array>
+    <map>
+      <key>gridnick</key><string>agni</string>
+      <key>gridname</key><string>Second Life (agni)</string>
+      <key>loginuri</key><string>https://login.agni.lindenlab.com/cgi-bin/login.cgi</string>
+      <key>loginpage</key><string></string>
+      <key>helperuri</key><string></string>
+      <key>website</key><string>https://secondlife.com/</string>
+      <key>support</key><string>https://support.secondlife.com/</string>
+      <key>register</key><string>https://join.secondlife.com/</string>
+      <key>password</key><string></string>
+      <key>version</key><string>1</string>
+    </map>
+    <map>
+      <key>gridnick</key><string>aditi</string>
+      <key>gridname</key><string>Second Life Beta (aditi)</string>
+      <key>loginuri</key><string>https://login.aditi.lindenlab.com/cgi-bin/login.cgi</string>
+      <key>loginpage</key><string></string>
+      <key>helperuri</key><string></string>
+      <key>website</key><string>https://secondlife.com/</string>
+      <key>support</key><string>https://support.secondlife.com/</string>
+      <key>register</key><string></string>
+      <key>password</key><string></string>
+      <key>version</key><string>1</string>
+    </map>
+  </array>
+</llsd>

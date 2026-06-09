@@ -47,6 +47,9 @@ public class GridMapControl : Control
     public static readonly StyledProperty<ObservableCollection<MapAvatarEntry>?> AvatarsProperty =
         AvaloniaProperty.Register<GridMapControl, ObservableCollection<MapAvatarEntry>?>(nameof(Avatars));
 
+    public static readonly StyledProperty<ObservableCollection<MapFriendEntry>?> FriendsProperty =
+        AvaloniaProperty.Register<GridMapControl, ObservableCollection<MapFriendEntry>?>(nameof(Friends));
+
     public static readonly StyledProperty<double> ZoomProperty =
         AvaloniaProperty.Register<GridMapControl, double>(nameof(Zoom), 1.0);
 
@@ -60,6 +63,12 @@ public class GridMapControl : Control
     {
         get => GetValue(AvatarsProperty);
         set => SetValue(AvatarsProperty, value);
+    }
+
+    public ObservableCollection<MapFriendEntry>? Friends
+    {
+        get => GetValue(FriendsProperty);
+        set => SetValue(FriendsProperty, value);
     }
 
     public double Zoom
@@ -434,6 +443,36 @@ public class GridMapControl : Control
             }
         }
 
+        // Draw friend markers (gold/yellow color)
+        var friends = Friends;
+        if (friends != null)
+        {
+            var friendBrush = new SolidColorBrush(Color.FromRgb(255, 200, 50));
+            foreach (var f in friends)
+            {
+                int gx = (int)f.GridX;
+                int gy = (int)f.GridY;
+                if (gx < minGX || gx > maxGX || gy < minGY || gy > maxGY) continue;
+
+                double sx = (gx + f.LocalX / 256.0 - _centerGridX) * pxPerReg + w / 2;
+                double sy = (_centerGridY - gy - f.LocalY / 256.0) * pxPerReg + h / 2;
+                ctx.DrawEllipse(friendBrush, null, new Point(sx, sy), 5, 5);
+                
+                // Draw friend name label
+                if (pxPerReg >= 32)
+                {
+                    var text = new FormattedText(
+                        f.Name,
+                        CultureInfo.CurrentCulture,
+                        FlowDirection.LeftToRight,
+                        typeface,
+                        10,
+                        friendBrush);
+                    ctx.DrawText(text, new Point(sx + 8, sy - 5));
+                }
+            }
+        }
+
         // Draw marker (teleport target / click position)
         {
             double mx = (_markerGridX + _markerLocalX / 256.0 - _centerGridX) * pxPerReg + w / 2;
@@ -491,3 +530,5 @@ public class VisibleRangeEventArgs : EventArgs
         MaxY = maxY;
     }
 }
+
+public record MapFriendEntry(UUID Id, string Name, uint GridX, uint GridY, float LocalX, float LocalY);

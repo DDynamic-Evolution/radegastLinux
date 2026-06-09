@@ -415,6 +415,13 @@ public partial class IMViewModel : ObservableObject, IDisposable, IChatContext
 
     private void HandlePersonalIM(InstantMessageEventArgs e)
     {
+        // Filter muted avatars
+        if (Client.Self.MuteList.Values.Any(m =>
+            m.Type == MuteType.Resident && m.ID == e.IM.FromAgentID))
+        {
+            return;
+        }
+
         var fromName = _instance.Names.Get(e.IM.FromAgentID, e.IM.FromAgentName);
         var message = ApplyRlvReceiveBlock(e.IM.Message, e.IM.FromAgentID.Guid);
 

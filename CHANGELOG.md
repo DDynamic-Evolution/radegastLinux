@@ -4,6 +4,16 @@
 
 ### Added
 
+- **Keyboard shortcuts** – Global shortcuts for tab navigation (Ctrl+1-8), teleport home (Ctrl+H), preferences (Ctrl+,), logout (Ctrl+Q), hide window (Ctrl+W), log viewer (Ctrl+Shift+L). Shortcuts displayed in menu items.
+- **Hardware ID spoofing** – Spoofs `id0` and `mac` login parameters using deterministic MD5 hashes (seed + username). Configurable in Preferences → Spoof tab with reroll button. Prevents hardware-based tracking/banning.
+- **Emoticon support** – Automatic conversion of text emoticons to Unicode emojis in chat (e.g., `:)` → 😊, `<3` → ❤️, `XD` → 😆). Includes emoticon picker button next to chat input for quick emoji insertion.
+- **Map tile disk cache** – World map tiles cached to disk (`~/.local/share/RadegastVeles/mapcache/`) for faster loading on subsequent visits. Configurable cache size (100-2000 MB) and TTL (1-90 days) in Preferences → General.
+- **Mute list filtering** – Chat messages and instant messages from muted avatars/objects are now filtered and no longer displayed. Mute list accessible via World → Mute List menu.
+- **Friends status in tray** – Tray icon tooltip now shows online friends count (e.g., "Radegast Veles - 5/12 friends online"). Updates automatically when friends come online/offline.
+- **Multi-grid dashboard** – New Dashboard window accessible from tray menu shows overview of all active sessions with agent name, grid, region, connection status, and friends online count.
+- **RLV debug panel** – RLV panel now has three tabs: Overview (restrictions, sources, auto-response settings), Live Log (real-time RLV command log), and Debug (engine status, permission checks, command log).
+- **Inventory batch operations** – Multi-select support in inventory tree (Ctrl+Click, Shift+Click). Batch delete, cut, and copy operations on multiple selected items.
+- **Map friend markers** – Friends found via map search are now displayed as gold markers on the world map with name labels. Friend positions are tracked and updated in real-time.
 - **Lua scripting plugin interface** – MoonSharp-based engine with lifecycle hooks (`on_start`, `on_stop`, `on_connected`, `on_disconnected`) and event hooks (`on_chat`, `on_im`, `on_teleport`)
 - **Lua API functions** – `send_chat`, `send_im`, `teleport`, `log`/`log_info`/`log_warn`/`log_error`, `get_setting`/`set_setting`, `http_get`, `schedule`
 - **Lua Scripting Preferences tab** – Script list with running-status indicator, Reload All / Reload Selected / Open Scripts Folder buttons, real-time console output

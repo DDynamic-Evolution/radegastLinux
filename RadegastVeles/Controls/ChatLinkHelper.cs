@@ -41,7 +41,8 @@ public static class ChatLinkHelper
 {
     /// <summary>
     /// Splits <paramref name="text"/> into alternating plain-text and link segments
-    /// using the standard SL URL regex.
+    /// using the standard SL URL regex. Emoticons in plain-text segments are
+    /// converted to Unicode emoji.
     /// </summary>
     public static IReadOnlyList<ChatTextSegment> ParseSegments(
         string? text, RadegastInstanceAvalonia? instance)
@@ -56,14 +57,14 @@ public static class ChatLinkHelper
         foreach (System.Text.RegularExpressions.Match m in matches)
         {
             if (m.Index > pos)
-                result.Add(new ChatTextSegment(text[pos..m.Index]));
+                result.Add(new ChatTextSegment(EmoticonHelper.ReplaceEmoticons(text[pos..m.Index])));
 
             result.Add(new ChatTextSegment(GetDisplayLabel(m.Value, instance), m.Value));
             pos = m.Index + m.Length;
         }
 
         if (pos < text.Length)
-            result.Add(new ChatTextSegment(text[pos..]));
+            result.Add(new ChatTextSegment(EmoticonHelper.ReplaceEmoticons(text[pos..])));
 
         return result;
     }

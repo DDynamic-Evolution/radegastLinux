@@ -156,8 +156,17 @@ public partial class InventoryPanel : UserControl
     private void InvTreeView_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (_vm == null) return;
+        
+        // Update primary selection
         if (e.AddedItems.Count > 0 && e.AddedItems[0] is InvTreeNode node)
             _vm.SelectedNode = node;
+        
+        // Update multi-selection list
+        var treeView = sender as TreeView;
+        if (treeView != null)
+        {
+            _vm.SelectedNodes = treeView.SelectedItems.OfType<InvTreeNode>().ToList();
+        }
     }
 
     private void InvTreeView_DoubleTapped(object? sender, RoutedEventArgs e)

@@ -48,6 +48,19 @@ public partial class PreferencesViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private int _imageDecodeConcurrency = 2;
 
+    // Map cache
+    [ObservableProperty]
+    private bool _mapCacheEnabled = true;
+
+    [ObservableProperty]
+    private int _mapCacheMaxSizeMB = 500;
+
+    [ObservableProperty]
+    private int _mapCacheTtlDays = 30;
+
+    [ObservableProperty]
+    private string _mapCacheInfo = string.Empty;
+
     // Audio
     [ObservableProperty]
     private bool _soundSystemAvailable;
@@ -95,6 +108,9 @@ public partial class PreferencesViewModel : ObservableObject, IDisposable
     // Lua Scripting
     public LuaViewModel Lua { get; }
 
+    // HW Spoof
+    public SpoofViewModel Spoof { get; }
+
     // Display Names
     [ObservableProperty]
     private int _displayNameMode = 1; // Default: Smart
@@ -106,6 +122,13 @@ public partial class PreferencesViewModel : ObservableObject, IDisposable
         "Display name only",
         "Display name + username (always)",
     ];
+
+    // Window behavior
+    [ObservableProperty]
+    private bool _minimizeToTray;
+
+    [ObservableProperty]
+    private bool _autoCheckUpdates;
 
     // Grids
     public ObservableCollection<Grid> Grids { get; } = new();
@@ -222,6 +245,7 @@ public partial class PreferencesViewModel : ObservableObject, IDisposable
         Mqtt = new MqttViewModel(instance, instance.Mqtt);
         Vpn = new VpnViewModel(instance, instance.Vpn);
         Lua = new LuaViewModel(instance);
+        Spoof = new SpoofViewModel();
         Load();
         _media.PropertyChanged += OnMediaPropertyChanged;
     }
@@ -257,6 +281,15 @@ public partial class PreferencesViewModel : ObservableObject, IDisposable
             ? s["image_decode_concurrency"].AsInteger()
             : Math.Max(1, Environment.ProcessorCount / 2);
 
+        // Map cache settings
+        MapCacheEnabled = s["map_cache_enabled"].Type != OSDType.Unknown
+            ? s["map_cache_enabled"].AsBoolean() : true;
+        MapCacheMaxSizeMB = s["map_cache_max_size_mb"].Type != OSDType.Unknown
+            ? s["map_cache_max_size_mb"].AsInteger() : 500;
+        MapCacheTtlDays = s["map_cache_ttl_days"].Type != OSDType.Unknown
+            ? s["map_cache_ttl_days"].AsInteger() : 30;
+        UpdateMapCacheInfo();
+
         SoundSystemAvailable = _media.SoundSystemAvailable;
         SoundSystemStatus = _media.SoundSystemStatus;
         MasterVolume = _media.MasterVolume;
@@ -275,6 +308,12 @@ public partial class PreferencesViewModel : ObservableObject, IDisposable
         // Display name mode
         DisplayNameMode = s["display_name_mode"].Type != OSDType.Unknown
             ? s["display_name_mode"].AsInteger() : 1;
+
+        // Minimize to tray
+        MinimizeToTray = s["minimize_to_tray"].AsBoolean();
+
+        // Auto-check for updates
+        AutoCheckUpdates = s["auto_check_updates"].AsBoolean();
 
         // Grids — apply persisted user grids to the manager, then populate the display list
         if (s["user_grids"] is OSDArray savedUserGrids)
@@ -298,6 +337,15 @@ public partial class PreferencesViewModel : ObservableObject, IDisposable
         s["image_cache_enabled"] = OSD.FromBoolean(ImageCacheEnabled);
         s["image_cache_expire_minutes"] = OSD.FromInteger(ImageCacheExpireMinutes);
         s["image_decode_concurrency"] = OSD.FromInteger(ImageDecodeConcurrency);
+
+        // Map cache settings
+        s["map_cache_enabled"] = OSD.FromBoolean(MapCacheEnabled);
+        s["map_cache_max_size_mb"] = OSD.FromInteger(MapCacheMaxSizeMB);
+        s["map_cache_ttl_days"] = OSD.FromInteger(MapCacheTtlDays);
+
+        // Reinitialize map cache with new settings
+        var mapCacheDir = Path.Combine(_instance.UserDir, "mapcache");
+        MapTileCache.Initialize(mapCacheDir, MapCacheEnabled, MapCacheMaxSizeMB * 1024 * 1024, MapCacheTtlDays);
 
         // Push audio changes to MediaViewModel; it will persist them to GlobalSettings
         _media.MasterVolume = MasterVolume;
@@ -356,5 +404,27 @@ public partial class PreferencesViewModel : ObservableObject, IDisposable
         s["display_name_mode"] = OSD.FromInteger(DisplayNameMode);
         _instance.Names.Mode = (Radegast.NameMode)DisplayNameMode;
         _instance.Names.CleanCache();
+
+        // Window behavior
+        s["minimize_to_tray"] = OSD.FromBoolean(MinimizeToTray);
+        s["auto_check_updates"] = OSD.FromBoolean(AutoCheckUpdates);
+
+        // Save spoof seed
+        HWSpoof.SaveToSettings(s);
+    }
+
+    [RelayCommand]
+    private void ClearMapCache()
+    {
+        MapTileCache.ClearCache();
+        UpdateMapCacheInfo();
+    }
+
+    private void UpdateMapCacheInfo()
+    {
+        var tileCount = MapTileCache.GetCacheTileCount();
+        var sizeBytes = MapTileCache.GetCacheSizeBytes();
+        var sizeMB = sizeBytes / (1024.0 * 1024.0);
+        MapCacheInfo = $"{tileCount} tiles, {sizeMB:F1} MB";
     }
 }

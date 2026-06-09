@@ -23,6 +23,7 @@
                 <Separator />
                 <MenuItem Header="_Website" Click="OnWebsiteClick" />
                 <MenuItem Header="_Issue Tracker" Click="OnIssueTrackerClick" />
+                <MenuItem Header="Check for _Updates..." Click="OnCheckForUpdatesClick" />
                 <Separator />
                 <MenuItem Header="_About Radegast Veles" Click="OnAboutClick" />
             </MenuItem>

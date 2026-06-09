@@ -13,46 +13,69 @@
         Width="1024" Height="768"
         AutomationProperties.Name="Radegast Veles main window">
 
+    <Window.KeyBindings>
+        <!-- Tab Navigation: Ctrl+1 bis Ctrl+8 -->
+        <KeyBinding Gesture="Ctrl+1" Command="{Binding ShowTabCommand}" CommandParameter="0" />
+        <KeyBinding Gesture="Ctrl+2" Command="{Binding ShowTabCommand}" CommandParameter="1" />
+        <KeyBinding Gesture="Ctrl+3" Command="{Binding ShowTabCommand}" CommandParameter="2" />
+        <KeyBinding Gesture="Ctrl+4" Command="{Binding ShowTabCommand}" CommandParameter="3" />
+        <KeyBinding Gesture="Ctrl+5" Command="{Binding ShowTabCommand}" CommandParameter="4" />
+        <KeyBinding Gesture="Ctrl+6" Command="{Binding ShowTabCommand}" CommandParameter="5" />
+        <KeyBinding Gesture="Ctrl+7" Command="{Binding ShowTabCommand}" CommandParameter="6" />
+        <KeyBinding Gesture="Ctrl+8" Command="{Binding ShowTabCommand}" CommandParameter="7" />
+        
+        <!-- World Actions -->
+        <KeyBinding Gesture="Ctrl+H" Command="{Binding TeleportHomeCommand}" />
+        
+        <!-- File Actions -->
+        <KeyBinding Gesture="Ctrl+," Command="{Binding OpenPreferencesCommand}" />
+        <KeyBinding Gesture="Ctrl+Q" Command="{Binding LogoutCommand}" />
+        <KeyBinding Gesture="Ctrl+W" Command="{Binding HideWindowCommand}" />
+        
+        <!-- Help Actions -->
+        <KeyBinding Gesture="Ctrl+Shift+L" Command="{Binding OpenLogViewerCommand}" />
+    </Window.KeyBindings>
+
     <DockPanel>
         <!-- Menu bar -->
         <Menu DockPanel.Dock="Top" AutomationProperties.Name="Main menu">
             <MenuItem Header="_File" AutomationProperties.Name="File menu">
-                <MenuItem Header="_Preferences" AutomationProperties.Name="Preferences"
-                          Click="OnPreferencesClick" />
+                <MenuItem Header="_Preferences" Command="{Binding OpenPreferencesCommand}"
+                          InputGesture="Ctrl+," AutomationProperties.Name="Preferences" />
                 <Separator />
-                <MenuItem Header="_Logout" AutomationProperties.Name="Logout agent"
-                          Click="OnLogoutClick" />
-                <MenuItem Header="_Hide Window" AutomationProperties.Name="Hide window"
-                          Click="OnHideClick" />
+                <MenuItem Header="_Logout" Command="{Binding LogoutCommand}"
+                          InputGesture="Ctrl+Q" AutomationProperties.Name="Logout agent" />
+                <MenuItem Header="_Hide Window" Command="{Binding HideWindowCommand}"
+                          InputGesture="Ctrl+W" AutomationProperties.Name="Hide window" />
                 <Separator />
                 <MenuItem Header="E_xit" AutomationProperties.Name="Exit application"
                           Click="OnExitClick" />
             </MenuItem>
             <MenuItem Header="_World" AutomationProperties.Name="World menu">
                 <MenuItem Header="Teleport _Home" Command="{Binding TeleportHomeCommand}"
-                          AutomationProperties.Name="Teleport to home" />
+                          InputGesture="Ctrl+H" AutomationProperties.Name="Teleport to home" />
                 <Separator />
                 <MenuItem Header="_My Profile" AutomationProperties.Name="Open my profile"
                           Click="OnShowMyProfileClick" />
                 <MenuItem Header="_Search" AutomationProperties.Name="Open search"
                           Click="OnShowSearchClick" />
                 <Separator />
-                <MenuItem Header="_Nearby" AutomationProperties.Name="Show nearby tab"
-                          Click="OnShowNearbyClick" />
-                <MenuItem Header="_IMs" AutomationProperties.Name="Show IMs tab"
-                          Click="OnShowIMClick" />
-                <MenuItem Header="_Map" AutomationProperties.Name="Show map tab"
-                          Click="OnShowMapClick" />
-                <MenuItem Header="_Objects" AutomationProperties.Name="Show objects tab"
-                          Click="OnShowObjectsClick" />
-                <MenuItem Header="_Inventory" AutomationProperties.Name="Show inventory tab"
-                          Click="OnShowInventoryClick" />
-                <MenuItem Header="_Friends" AutomationProperties.Name="Show friends tab"
-                          Click="OnShowFriendsClick" />
-                <MenuItem Header="_Groups" AutomationProperties.Name="Show groups tab"
-                          Click="OnShowGroupsClick" />
-                <MenuItem Header="_Media" AutomationProperties.Name="Show media tab"
-                          Click="OnShowMediaClick" />
+                <MenuItem Header="_Nearby" Command="{Binding ShowTabCommand}" CommandParameter="0"
+                          InputGesture="Ctrl+1" AutomationProperties.Name="Show nearby tab" />
+                <MenuItem Header="_IMs" Command="{Binding ShowTabCommand}" CommandParameter="1"
+                          InputGesture="Ctrl+2" AutomationProperties.Name="Show IMs tab" />
+                <MenuItem Header="_Map" Command="{Binding ShowTabCommand}" CommandParameter="2"
+                          InputGesture="Ctrl+3" AutomationProperties.Name="Show map tab" />
+                <MenuItem Header="_Objects" Command="{Binding ShowTabCommand}" CommandParameter="3"
+                          InputGesture="Ctrl+4" AutomationProperties.Name="Show objects tab" />
+                <MenuItem Header="_Inventory" Command="{Binding ShowTabCommand}" CommandParameter="4"
+                          InputGesture="Ctrl+5" AutomationProperties.Name="Show inventory tab" />
+                <MenuItem Header="_Friends" Command="{Binding ShowTabCommand}" CommandParameter="5"
+                          InputGesture="Ctrl+6" AutomationProperties.Name="Show friends tab" />
+                <MenuItem Header="_Groups" Command="{Binding ShowTabCommand}" CommandParameter="6"
+                          InputGesture="Ctrl+7" AutomationProperties.Name="Show groups tab" />
+                <MenuItem Header="_Media" Command="{Binding ShowTabCommand}" CommandParameter="7"
+                          InputGesture="Ctrl+8" AutomationProperties.Name="Show media tab" />
                 <Separator />
                 <MenuItem Header="_Mute List" AutomationProperties.Name="Show mute list"
                           Click="OnShowMuteListClick" />
@@ -75,13 +98,15 @@
                           Click="OnUploadAnimationClick" />
             </MenuItem>
             <MenuItem Header="_Help" AutomationProperties.Name="Help menu">
-                <MenuItem Header="_Log Viewer" AutomationProperties.Name="Open log viewer"
-                          Click="OnLogViewerClick" />
+                <MenuItem Header="_Log Viewer" Command="{Binding OpenLogViewerCommand}"
+                          InputGesture="Ctrl+Shift+L" AutomationProperties.Name="Open log viewer" />
                 <Separator />
                 <MenuItem Header="_Website" AutomationProperties.Name="Open project website"
                           Click="OnWebsiteClick" />
                 <MenuItem Header="_Issue Tracker" AutomationProperties.Name="Open issue tracker"
                           Click="OnIssueTrackerClick" />
+                <MenuItem Header="Check for _Updates..." AutomationProperties.Name="Check for updates"
+                          Click="OnCheckForUpdatesClick" />
                 <Separator />
                 <MenuItem Header="_About Radegast Veles" AutomationProperties.Name="About Radegast Veles"
                           Click="OnAboutClick" />

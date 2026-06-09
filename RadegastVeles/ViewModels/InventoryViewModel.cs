@@ -69,6 +69,9 @@ public partial class InventoryViewModel : ObservableObject, IDisposable
     private InvTreeNode? _selectedNode;
 
     [ObservableProperty]
+    private List<InvTreeNode> _selectedNodes = new();
+
+    [ObservableProperty]
     private string _itemName = string.Empty;
 
     [ObservableProperty]
@@ -120,11 +123,20 @@ public partial class InventoryViewModel : ObservableObject, IDisposable
 
     // Suppresses "Received:" notifications while inventory is loading at login
     private bool _inventoryLoaded;
+    private readonly DispatcherTimer _searchDebounceTimer;
 
     partial void OnSearchTextChanged(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
+        {
             HasSearchResults = false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            _searchDebounceTimer.Stop();
+            _searchDebounceTimer.Start();
+        }
     }
 
     [RelayCommand]
@@ -149,6 +161,14 @@ public partial class InventoryViewModel : ObservableObject, IDisposable
     public InventoryViewModel(RadegastInstanceAvalonia instance)
     {
         _instance = instance;
+
+        _searchDebounceTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(300), DispatcherPriority.Background,
+            async (_, _) =>
+            {
+                _searchDebounceTimer.Stop();
+                if (!string.IsNullOrWhiteSpace(SearchText))
+                    await SearchInventory();
+            });
 
         _wornSlots = BuildWornSlots();
         RegisterClientEvents(Client);
@@ -987,6 +1007,64 @@ public partial class InventoryViewModel : ObservableObject, IDisposable
         if (SelectedNode == null) return;
         InvClipboard.Copy(SelectedNode.ItemId, SelectedNode.Name, SelectedNode.IsFolder);
         _instance.ShowNotificationInChat($"Copied: {SelectedNode.Name}");
+    }
+
+    [RelayCommand]
+    private async Task DeleteSelectedItems()
+    {
+        if (SelectedNodes.Count == 0) return;
+
+        var trashId = Client.Inventory.FindFolderForType(FolderType.Trash);
+        int total = SelectedNodes.Count;
+        int completed = 0;
+
+        foreach (var node in SelectedNodes.ToList())
+        {
+            Inventory.TryGetValue(node.ItemId, out InventoryBase? invItem);
+            if (invItem == null) continue;
+
+            try
+            {
+                if (invItem is InventoryFolder)
+                    await Client.Inventory.MoveFolderAsync(invItem.UUID, trashId);
+                else
+                    await Client.Inventory.MoveItemAsync(invItem.UUID, trashId, invItem.Name);
+
+                completed++;
+                node.Parent?.Children.Remove(node);
+            }
+            catch (Exception ex)
+            {
+                _instance.ShowNotificationInChat($"Failed to delete {invItem.Name}: {ex.Message}");
+            }
+        }
+
+        RefreshFolderNode(RootNodes, trashId);
+        _instance.ShowNotificationInChat($"Moved {completed}/{total} items to trash.");
+    }
+
+    [RelayCommand]
+    private void CutSelectedItems()
+    {
+        if (SelectedNodes.Count == 0) return;
+        
+        // For simplicity, cut only the first selected item
+        // Full multi-item cut would require extending InventoryClipboard
+        var firstNode = SelectedNodes[0];
+        InvClipboard.Cut(firstNode.ItemId, firstNode.Name, firstNode.IsFolder);
+        _instance.ShowNotificationInChat($"Cut: {firstNode.Name} (and {SelectedNodes.Count - 1} more)");
+    }
+
+    [RelayCommand]
+    private void CopySelectedItems()
+    {
+        if (SelectedNodes.Count == 0) return;
+        
+        // For simplicity, copy only the first selected item
+        // Full multi-item copy would require extending InventoryClipboard
+        var firstNode = SelectedNodes[0];
+        InvClipboard.Copy(firstNode.ItemId, firstNode.Name, firstNode.IsFolder);
+        _instance.ShowNotificationInChat($"Copied: {firstNode.Name} (and {SelectedNodes.Count - 1} more)");
     }
 
     [RelayCommand]

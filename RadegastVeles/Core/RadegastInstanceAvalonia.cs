@@ -103,6 +103,9 @@ public sealed class RadegastInstanceAvalonia : RadegastInstance
         if (GlobalSettings["chat_logging_enabled"].Type != OpenMetaverse.StructuredData.OSDType.Unknown)
             ChatLog.IsEnabled = GlobalSettings["chat_logging_enabled"].AsBoolean();
 
+        // Load HW spoof seed
+        HWSpoof.LoadFromSettings(GlobalSettings);
+
         client.Self.ScriptDialog += Self_ScriptDialog;
         client.Self.ScriptQuestion += Self_ScriptQuestion;
         client.Self.LoadURL += Self_LoadURL;

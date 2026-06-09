@@ -17,6 +17,7 @@
             <controls:GridMapControl x:Name="MapControl"
                 Regions="{Binding MapRegions}"
                 Avatars="{Binding MapAvatars}"
+                Friends="{Binding MapFriends}"
                 AutomationProperties.Name="Grid map display" />
         </Border>
 

@@ -196,6 +196,9 @@ namespace Radegast
             GridManger.LoadGrids();
             Names = new NameManager(this);
             GestureManager = new GestureManager(Client);
+            var asmDir = Path.GetDirectoryName(typeof(RadegastInstance).Assembly.Location);
+            if (asmDir != null)
+                OpenMetaverse.Settings.RESOURCE_DIR = asmDir;
             LslSyntax = new LslSyntax(Client);
 
             // IMSession manager

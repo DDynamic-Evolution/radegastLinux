@@ -21,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Xml;
 using AvaloniaEdit.Highlighting;
@@ -39,7 +40,10 @@ public static class LslHighlighting
 
         try
         {
-            // Populate LslSyntax keywords from disk (linden/keywords_lsl_default.xml)
+            // Ensure keywords file is found: set RESOURCE_DIR to executable directory
+            var dir = Path.GetDirectoryName(typeof(LslHighlighting).Assembly.Location);
+            if (dir != null)
+                OpenMetaverse.Settings.RESOURCE_DIR = dir;
             _ = new LslSyntax();
             var xml = BuildXml(LslSyntax.Keywords);
             using var reader = XmlReader.Create(new StringReader(xml));

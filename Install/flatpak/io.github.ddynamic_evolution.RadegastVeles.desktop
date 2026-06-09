@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Radegast Veles
+Comment=Lightweight Second Life and OpenSimulator client
+Exec=RadegastVeles
+Icon=io.github.ddynamic_evolution.RadegastVeles
+Terminal=false
+Type=Application
+Categories=Game;Network;Chat;
+StartupNotify=true
+StartupWMClass=RadegastVeles

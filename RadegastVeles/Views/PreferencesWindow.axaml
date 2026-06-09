@@ -53,6 +53,12 @@
                             </ListBox.ItemTemplate>
                         </ListBox>
                         <Separator />
+                        <TextBlock Text="Window Behavior" FontWeight="SemiBold" FontSize="14" />
+                        <CheckBox Content="Minimize to tray when closing window"
+                                  IsChecked="{Binding MinimizeToTray}" />
+                        <CheckBox Content="Check for updates automatically on login"
+                                  IsChecked="{Binding AutoCheckUpdates}" />
+                        <Separator />
                         <TextBlock Text="Paths" FontWeight="SemiBold" FontSize="14" />
                         <TextBlock Text="Chat Logging" FontWeight="SemiBold" />
                         <CheckBox Content="Enable chat logging" IsChecked="{Binding ChatLoggingEnabled}"
@@ -76,6 +82,29 @@
                                     Click="OnBrowseImageCacheDirClick"
                                     AutomationProperties.Name="Browse for image cache directory" />
                         </Grid>
+                        <Separator />
+                        <TextBlock Text="Map Tile Cache" FontWeight="SemiBold" FontSize="14" />
+                        <TextBlock Text="Cache world map tiles to disk for faster loading on subsequent visits."
+                                   FontSize="11" Opacity="0.65" TextWrapping="Wrap" />
+                        <CheckBox Content="Enable map tile cache" IsChecked="{Binding MapCacheEnabled}"
+                                  AutomationProperties.Name="Enable map tile cache" />
+                        <Grid ColumnDefinitions="160,*,60" IsEnabled="{Binding MapCacheEnabled}">
+                            <TextBlock Grid.Column="0" Text="Max cache size (MB)" VerticalAlignment="Center" />
+                            <Slider Grid.Column="1" Minimum="100" Maximum="2000" Value="{Binding MapCacheMaxSizeMB}"
+                                    AutomationProperties.Name="Max cache size in MB" />
+                            <TextBlock Grid.Column="2" Text="{Binding MapCacheMaxSizeMB}" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                        </Grid>
+                        <Grid ColumnDefinitions="160,*,60" IsEnabled="{Binding MapCacheEnabled}">
+                            <TextBlock Grid.Column="0" Text="Tile expiry (days)" VerticalAlignment="Center" />
+                            <Slider Grid.Column="1" Minimum="1" Maximum="90" Value="{Binding MapCacheTtlDays}"
+                                    AutomationProperties.Name="Tile expiry in days" />
+                            <TextBlock Grid.Column="2" Text="{Binding MapCacheTtlDays}" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                        </Grid>
+                        <StackPanel Orientation="Horizontal" Spacing="8" IsEnabled="{Binding MapCacheEnabled}">
+                            <TextBlock Text="{Binding MapCacheInfo}" VerticalAlignment="Center" Opacity="0.7" />
+                            <Button Content="Clear Cache" Command="{Binding ClearMapCacheCommand}"
+                                    AutomationProperties.Name="Clear map cache" />
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -354,6 +383,38 @@
                                         <Button Content="Cancel" Command="{Binding Vpn.CancelEditCommand}" />
                                     </StackPanel>
                                 </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+                    <TabItem Header="Spoof" AutomationProperties.Name="Hardware spoof preferences">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="8" Spacing="12">
+                                <TextBlock Text="Hardware ID Spoofing"
+                                           FontWeight="SemiBold" FontSize="14" />
+                                <TextBlock Text="Radegast spoofs hardware identifiers sent during login to prevent tracking. Click 'Reroll Seed' to generate new fake IDs."
+                                           TextWrapping="Wrap" FontSize="11" Opacity="0.65" />
+
+                                <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,8,0,0">
+                                    <TextBlock Text="Username:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,4" />
+                                    <TextBox Text="{Binding Spoof.Username}" IsReadOnly="True" Grid.Row="0" Grid.Column="1" Margin="0,0,0,4"
+                                             AutomationProperties.Name="Spoofed username" />
+
+                                    <TextBlock Text="Seed:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,4" />
+                                    <TextBox Text="{Binding Spoof.Seed}" IsReadOnly="True" Grid.Row="1" Grid.Column="1" Margin="0,0,0,4"
+                                             AutomationProperties.Name="Spoof seed" />
+
+                                    <TextBlock Text="ID0:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,4" />
+                                    <TextBox Text="{Binding Spoof.Id0}" IsReadOnly="True" Grid.Row="2" Grid.Column="1" Margin="0,0,0,4"
+                                             AutomationProperties.Name="Spoofed ID0" />
+
+                                    <TextBlock Text="MAC:" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,4" />
+                                    <TextBox Text="{Binding Spoof.Mac}" IsReadOnly="True" Grid.Row="3" Grid.Column="1" Margin="0,0,0,4"
+                                             AutomationProperties.Name="Spoofed MAC" />
+                                </Grid>
+
+                                <Button Content="Reroll Seed" Command="{Binding Spoof.RerollSeedCommand}"
+                                        HorizontalAlignment="Left"
+                                        AutomationProperties.Name="Reroll spoof seed" />
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>

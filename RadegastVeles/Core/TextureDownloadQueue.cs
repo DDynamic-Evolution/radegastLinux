@@ -101,6 +101,29 @@ public sealed class TextureDownloadQueue : IDisposable
     }
 
     /// <summary>
+    /// Enqueue a URL-based image download + decode, with access to raw bytes.
+    /// Returns immediately; the callback fires on completion with the decoded bitmap and raw bytes (or null on failure).
+    /// Duplicate requests for the same key are silently ignored.
+    /// </summary>
+    /// <param name="key">Unique key to deduplicate requests (e.g. "maptile:1000:1000").</param>
+    /// <param name="url">The URL to download from.</param>
+    /// <param name="onComplete">Called with the decoded Bitmap and raw bytes (or null on failure).</param>
+    /// <param name="priority">Download priority.</param>
+    public void EnqueueWithBytes(string key, string url, Action<Bitmap?, byte[]?> onComplete, TexturePriority priority = TexturePriority.Normal)
+    {
+        if (!_pending.TryAdd(key, 0)) return;
+
+        var item = new WorkItem(key, url, null, onComplete);
+        var queue = priority switch
+        {
+            TexturePriority.High => _highQueue,
+            TexturePriority.Low => _lowQueue,
+            _ => _normalQueue
+        };
+        queue.Add(item);
+    }
+
+    /// <summary>
     /// Enqueue a raw-bytes image decode (no download needed).
     /// </summary>
     public void EnqueueDecode(string key, byte[] data, Action<Bitmap?> onComplete, TexturePriority priority = TexturePriority.Normal)
@@ -162,7 +185,14 @@ public sealed class TextureDownloadQueue : IDisposable
                 if (item != null)
                 {
                     _pending.TryRemove(item.Key, out _);
-                    try { item.OnComplete(null); } catch { }
+                    try
+                    {
+                        if (item.OnCompleteWithBytes != null)
+                            item.OnCompleteWithBytes(null, null);
+                        else
+                            item.OnComplete?.Invoke(null);
+                    }
+                    catch { }
                 }
             }
         }
@@ -211,13 +241,17 @@ public sealed class TextureDownloadQueue : IDisposable
         catch
         {
             bitmap = null;
+            data = null;
         }
         finally
         {
             _pending.TryRemove(item.Key, out _);
         }
 
-        item.OnComplete(bitmap);
+        if (item.OnCompleteWithBytes != null)
+            item.OnCompleteWithBytes(bitmap, data);
+        else
+            item.OnComplete?.Invoke(bitmap);
     }
 
     public void Dispose()
@@ -242,5 +276,13 @@ public sealed class TextureDownloadQueue : IDisposable
         string Key,
         string? Url,
         byte[]? RawData,
-        Action<Bitmap?> OnComplete);
+        Action<Bitmap?>? OnComplete,
+        Action<Bitmap?, byte[]?>? OnCompleteWithBytes)
+    {
+        public WorkItem(string key, string? url, byte[]? rawData, Action<Bitmap?> onComplete)
+            : this(key, url, rawData, onComplete, null) { }
+
+        public WorkItem(string key, string? url, byte[]? rawData, Action<Bitmap?, byte[]?> onCompleteWithBytes)
+            : this(key, url, rawData, null, onCompleteWithBytes) { }
+    }
 }

@@ -30,6 +30,11 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private readonly RadegastInstanceAvalonia _instance;
     private int _prevBalance = -1;
 
+    public event EventHandler? OpenPreferencesRequested;
+    public event EventHandler? LogoutRequested;
+    public event EventHandler? HideWindowRequested;
+    public event EventHandler? OpenLogViewerRequested;
+
     [ObservableProperty]
     private string _title = "Radegast Veles";
 
@@ -129,7 +134,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
             IM.OpenIMSession(e.AgentId, e.AgentName);
-            ShowTab(1);
+            ShowTabCommand.Execute(1);
         });
     }
 
@@ -138,18 +143,13 @@ public partial class MainViewModel : ObservableObject, IDisposable
         Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
             IM.OpenGroupIMSession(e.GroupId, e.GroupName);
-            ShowTab(1);
+            ShowTabCommand.Execute(1);
         });
     }
 
     private void Instance_NotificationReceived(object? sender, NotificationViewModel e)
     {
         Avalonia.Threading.Dispatcher.UIThread.Post(() => Notifications.Add(e));
-    }
-
-    public void ShowTab(int index)
-    {
-        SelectedTabIndex = index;
     }
 
     partial void OnSelectedTabIndexChanged(int value)
@@ -164,5 +164,42 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private void TeleportHome()
     {
         _instance.Client.Self.RequestTeleport(UUID.Zero);
+    }
+
+    [RelayCommand]
+    private void ShowTab(object? parameter)
+    {
+        int index = 0;
+        if (parameter is int i)
+            index = i;
+        else if (parameter is string s && int.TryParse(s, out var parsed))
+            index = parsed;
+        
+        if (index >= 0 && index <= 7)
+            SelectedTabIndex = index;
+    }
+
+    [RelayCommand]
+    private void OpenPreferences()
+    {
+        OpenPreferencesRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private void Logout()
+    {
+        LogoutRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private void HideWindow()
+    {
+        HideWindowRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private void OpenLogViewer()
+    {
+        OpenLogViewerRequested?.Invoke(this, EventArgs.Empty);
     }
 }

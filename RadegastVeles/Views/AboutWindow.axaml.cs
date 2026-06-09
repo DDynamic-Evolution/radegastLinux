@@ -21,8 +21,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -188,5 +191,115 @@ public partial class AboutWindow : Window
             Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
         }
         catch { /* best effort */ }
+    }
+
+    private static readonly HttpClient _httpClient = new();
+    private static readonly Version _currentVersion =
+        Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0, 0, 0);
+
+    internal static async Task CheckForUpdatesAsync(Window parent)
+    {
+        try
+        {
+            _httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd("RadegastVeles");
+            using var resp = await _httpClient.GetAsync(
+                "https://api.github.com/repos/DDynamic-Evolution/radegastLinux/releases/latest");
+            resp.EnsureSuccessStatusCode();
+            var json = await resp.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+            var tag = doc.RootElement.GetProperty("tag_name").GetString() ?? "";
+            var remoteStr = tag.TrimStart('v');
+            if (!Version.TryParse(remoteStr, out var remoteVersion))
+            {
+                await ShowDialog(parent, "Update Check", "Could not parse latest version tag.");
+                return;
+            }
+
+            if (remoteVersion > _currentVersion)
+            {
+                var result = await ShowDialog(parent, "Update Available",
+                    $"Version {remoteVersion} is available (you have {_currentVersion.ToString(3)}).\nDownload from GitHub?",
+                    "Download", "Later");
+                if (result == "Download")
+                    OpenUrl("https://github.com/DDynamic-Evolution/radegastLinux/releases/latest");
+            }
+            else
+            {
+                await ShowDialog(parent, "Up to Date",
+                    $"You're running the latest version ({_currentVersion.ToString(3)}).");
+            }
+        }
+        catch (HttpRequestException)
+        {
+            await ShowDialog(parent, "Update Check", "Could not reach GitHub. Check your internet connection.");
+        }
+        catch (Exception ex)
+        {
+            await ShowDialog(parent, "Update Check", $"Error checking for updates:\n{ex.Message}");
+        }
+    }
+
+    private static async Task<string> ShowDialog(Window parent, string title, string message,
+        string? yesLabel = null, string? noLabel = null)
+    {
+        if (yesLabel != null)
+        {
+            var msgBox = new Window
+            {
+                Title = title,
+                Width = 420, Height = 200,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                SizeToContent = SizeToContent.WidthAndHeight,
+                CanResize = false,
+                Content = new StackPanel
+                {
+                    Margin = new Thickness(20),
+                    Spacing = 16,
+                    Children =
+                    {
+                        new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap },
+                        new StackPanel
+                        {
+                            Orientation = Orientation.Horizontal,
+                            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                            Spacing = 12,
+                            Children =
+                            {
+                                new Button { Content = yesLabel, Width = 100 },
+                                new Button { Content = noLabel ?? "Cancel", Width = 100 },
+                            }
+                        }
+                    }
+                }
+            };
+            var tcs = new TaskCompletionSource<string>();
+            var panel = (StackPanel)((StackPanel)msgBox.Content).Children[1];
+            ((Button)panel.Children[0]).Click += (_, _) => { tcs.TrySetResult(yesLabel!); msgBox.Close(); };
+            ((Button)panel.Children[1]).Click += (_, _) => { tcs.TrySetResult(noLabel ?? ""); msgBox.Close(); };
+            await msgBox.ShowDialog(parent);
+            return await tcs.Task;
+        }
+
+        var simpleBox = new Window
+        {
+            Title = title,
+            Width = 420, Height = 180,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            SizeToContent = SizeToContent.WidthAndHeight,
+            CanResize = false,
+            Content = new StackPanel
+            {
+                Margin = new Thickness(20),
+                Spacing = 16,
+                Children =
+                {
+                    new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap },
+                    new Button { Content = "OK", Width = 100, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center }
+                }
+            }
+        };
+        ((Button)((StackPanel)simpleBox.Content).Children[1]).Click += (_, _) => simpleBox.Close();
+        await simpleBox.ShowDialog(parent);
+        return "OK";
     }
 }
