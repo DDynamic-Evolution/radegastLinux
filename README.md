@@ -123,45 +123,22 @@ Pull requests are nice. Try not to be a dick, and we will all get along just fin
 
 ### Project founder:
 
-* **Latif Khalifa**
-
-### Windows maintainer:
-
-* **Cinder Roxley** (email cinder sdf.org)
+* **Latif Khalifa** In loving memory
 
 ### Linux maintainer:
 
 * **Miko Astral**
 
-### Contributors:
-
-* **nooperation**
-* **Luminous Luminos**
-
-### Alumni Contributors:
-
-* **Douglas R. Miles**
-* **Mojito Sorbet**
-* **Robin Cornelius**
-* **Revolution Smythe**
-
 ## License
 
-**Radegast Metaverse Client**
+**Radegast Velese Metaverse Client**
 * Copyright © 2009–2014, Radegast Development Team
-* Copyright © 2016–2026, Sjofn LLC
 * Copyright © 2025–2026, Disvail Dynamic
 * All rights reserved.
 
  Radegast is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-
-## Contributors
-
-<a href="https://github.com/cinderblocks/Radegast/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=cinderblocks/Radegast" />
-</a>
 
 ## Acknowledgments
 
