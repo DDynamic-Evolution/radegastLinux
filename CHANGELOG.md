@@ -1,5 +1,25 @@
 # Changelog – Radegast Veles
 
+## 0.1.2 – 2026-06-09
+
+### Added
+
+- **Lua scripting plugin interface** – MoonSharp-based engine with lifecycle hooks (`on_start`, `on_stop`, `on_connected`, `on_disconnected`) and event hooks (`on_chat`, `on_im`, `on_teleport`)
+- **Lua API functions** – `send_chat`, `send_im`, `teleport`, `log`/`log_info`/`log_warn`/`log_error`, `get_setting`/`set_setting`, `http_get`, `schedule`
+- **Lua Scripting Preferences tab** – Script list with running-status indicator, Reload All / Reload Selected / Open Scripts Folder buttons, real-time console output
+- **Lua API documentation** – `RadegastVeles/Scripting/API.md` with full reference for script authors
+- **Script auto-discovery** – `.lua` files in `~/.local/share/RadegastVeles/scripts/` are detected and loaded on startup; scripts start/stop on connect/disconnect
+
+### Changed
+
+- **LuaPlugin callback mechanism** – Replaced broken `RegisterCallback` dictionary with globals lookup (`GetHook`); scripts now use natural assignment (`on_chat = function(...) end`) instead of function-call registration
+- **Preferences window** – Now resizable (`CanResize="True"`, `MinWidth="480"`, `MinHeight="400"`); increased default size from 540×500 to 640×540
+
+### Fixed
+
+- **LuaPlugin hooks never firing** – `on_start`/`on_stop`/`on_chat`/`on_im` etc. were looked up in an empty `_callbacks` dictionary (the `RegisterCallback` delegate was overwritten by Lua assignment). Now hooks are read directly from `_script.Globals` via `GetHook()`, matching the example script pattern.
+- **Lua build errors** – `Logger.Log`→`Logger.Warn` (no 1-arg overload), `FileScriptLoader`→`FileSystemScriptLoader` (MoonSharp 2.0 rename), `ChatEventArgs.Channel/SourceName`→`e.Type`/`e.FromName`
+
 ## 0.1.1 – 2026-06-09
 
 ### Added
