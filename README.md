@@ -147,8 +147,9 @@ Pull requests are nice. Try not to be a dick, and we will all get along just fin
 ## License
 
 **Radegast Metaverse Client**
-* Copyright © 2009-2018, Radegast Development Team
-* Copyright © 2017-2026, Sjofn, LLC.
+* Copyright © 2009–2014, Radegast Development Team
+* Copyright © 2016–2026, Sjofn LLC
+* Copyright © 2025–2026, Disvail Dynamic
 * All rights reserved.
 
  Radegast is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
