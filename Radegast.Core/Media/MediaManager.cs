@@ -391,13 +391,15 @@ namespace Radegast.Media
                         ".  This program requires " +
                         VERSION.number.ToString("X") + ".");
 
-                // Try to detect soud system used
+                // Try to detect sound output backend used.
+                // AUTODETECT first — FMOD will try available backends in priority order.
+                // Fall back to specific backends if AUTODETECT itself is rejected.
                 if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX)
                 {
                     bool audioOK = false;
                     OUTPUTTYPE[] outputsToTry = Environment.OSVersion.Platform == PlatformID.MacOSX
                         ? new[] { OUTPUTTYPE.COREAUDIO, OUTPUTTYPE.AUTODETECT }
-                        : new[] { OUTPUTTYPE.PULSEAUDIO, OUTPUTTYPE.ALSA, OUTPUTTYPE.AUTODETECT };
+                        : new[] { OUTPUTTYPE.AUTODETECT, OUTPUTTYPE.ALSA, OUTPUTTYPE.PULSEAUDIO };
 
                     foreach (var output in outputsToTry)
                     {
@@ -416,86 +418,15 @@ namespace Radegast.Media
 
                     if (!audioOK)
                     {
-                        Logger.Warn("Failed to set any audio output on Unix/Mac platform");
+                        Logger.Warn("Failed to set any audio output on Unix/Mac platform, falling back to NOSOUND");
+                        system.setOutput(OUTPUTTYPE.NOSOUND);
                     }
                 }
 
                 OUTPUTTYPE outputType = OUTPUTTYPE.UNKNOWN;
                 FMODExec(system.getOutput(out outputType));
 
-                // Get driver information
-                FMODExec(system.getNumDrivers(out int numDrivers));
-                DriverCount = numDrivers;
-                Logger.Info($"FMOD detected {numDrivers} audio driver(s)");
-
-                // Apply preferred driver selection if set
-                if (PreferredDriver >= 0 && PreferredDriver < numDrivers)
-                {
-                    Logger.Info($"Applying preferred audio driver: {PreferredDriver}");
-                    var driverResult = system.setDriver(PreferredDriver);
-                    if (driverResult == RESULT.OK)
-                    {
-                        SelectedDriver = PreferredDriver;
-                        Logger.Info($"Successfully set preferred audio driver to index {PreferredDriver}");
-                    }
-                    else
-                    {
-                        Logger.Warn($"Failed to set preferred audio driver {PreferredDriver}: {driverResult}");
-                        PreferredDriver = -1; // Reset to default
-                    }
-                }
-                else if (PreferredDriver >= numDrivers)
-                {
-                    Logger.Warn($"Preferred driver index {PreferredDriver} is out of range (0-{numDrivers - 1})");
-                    PreferredDriver = -1; // Reset to default
-                }
-
-                // Log information about each driver
-                for (int i = 0; i < numDrivers && i < 10; i++) // Limit to first 10 to avoid spam
-                {
-                    try
-                    {
-                        FMODExec(system.getDriverInfo(i, out string name, 256, out Guid guid, out int systemRate, out SPEAKERMODE speakerMode, out int speakerModeChannels));
-                        Logger.Info($"Driver {i}: {name} - {systemRate}Hz, {speakerMode} ({speakerModeChannels} channels)");
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Debug($"Could not get info for driver {i}: {ex.Message}");
-                    }
-                }
-
-// *TODO: Investigate if this all is still needed under FMODStudio
-#if false
-                // The user has the 'Acceleration' slider set to off, which
-                // is terrible for latency.  At 48khz, the latency between
-                // issuing an fmod command and hearing it will now be about 213ms.
-                if ((caps & FMOD.CAPS.HARDWARE_EMULATED) == FMOD.CAPS.HARDWARE_EMULATED)
-                {
-                    FMODExec(system.setDSPBufferSize(1024, 10));
-                }
-
-                try
-                {
-                    StringBuilder name = new StringBuilder(128);
-                    // Get driver information so we can check for a wierd one.
-                    Guid guid = new Guid();
-                    FMODExec(system.getDriverInfo(0, name, 128, out guid));
-    
-                    // Sigmatel sound devices crackle for some reason if the format is pcm 16bit.
-                    // pcm floating point output seems to solve it.
-                    if (name.ToString().IndexOf("SigmaTel") != -1)
-                    {
-                        FMODExec(system.setSoftwareFormat(
-                            48000,
-                            FMOD.SOUND_FORMAT.PCMFLOAT,
-                            0, 0,
-                            FMOD.DSP_RESAMPLER.LINEAR)
-                        );
-                    }
-                }
-                catch {}
-#endif
-                // Apply DSP buffer settings if configured
+                // Apply DSP buffer settings if configured (must be done before system.init)
                 if (DSPBufferSize > 0 && DSPBufferCount > 0)
                 {
                     var bufferResult = system.setDSPBufferSize((uint)DSPBufferSize, DSPBufferCount);
@@ -534,6 +465,47 @@ namespace Radegast.Media
                     
                     Logger.Warn(errorMsg);
                     throw(new Exception(result.ToString()));
+                }
+
+                // Driver enumeration (must be done after system.init)
+                FMODExec(system.getNumDrivers(out int numDrivers));
+                DriverCount = numDrivers;
+                Logger.Info($"FMOD detected {numDrivers} audio driver(s)");
+
+                // Apply preferred driver selection if set
+                if (PreferredDriver >= 0 && PreferredDriver < numDrivers)
+                {
+                    Logger.Info($"Applying preferred audio driver: {PreferredDriver}");
+                    var driverResult = system.setDriver(PreferredDriver);
+                    if (driverResult == RESULT.OK)
+                    {
+                        SelectedDriver = PreferredDriver;
+                        Logger.Info($"Successfully set preferred audio driver to index {PreferredDriver}");
+                    }
+                    else
+                    {
+                        Logger.Warn($"Failed to set preferred audio driver {PreferredDriver}: {driverResult}");
+                        PreferredDriver = -1; // Reset to default
+                    }
+                }
+                else if (PreferredDriver >= numDrivers)
+                {
+                    Logger.Warn($"Preferred driver index {PreferredDriver} is out of range (0-{numDrivers - 1})");
+                    PreferredDriver = -1; // Reset to default
+                }
+
+                // Log information about each driver
+                for (int i = 0; i < numDrivers && i < 10; i++)
+                {
+                    try
+                    {
+                        FMODExec(system.getDriverInfo(i, out string name, 256, out Guid guid, out int systemRate, out SPEAKERMODE speakerMode, out int speakerModeChannels));
+                        Logger.Info($"Driver {i}: {name} - {systemRate}Hz, {speakerMode} ({speakerModeChannels} channels)");
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Debug($"Could not get info for driver {i}: {ex.Message}");
+                    }
                 }
 
                 // Set real-world effect scales.

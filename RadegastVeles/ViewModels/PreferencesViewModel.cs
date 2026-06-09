@@ -35,7 +35,6 @@ public partial class PreferencesViewModel : ObservableObject, IDisposable
 {
     private readonly RadegastInstanceAvalonia _instance;
     private readonly MediaViewModel _media;
-    private readonly VoiceViewModel? _voice;
     private Settings GlobalSettings => _instance.GlobalSettings;
 
     // General – Image cache
@@ -86,37 +85,23 @@ public partial class PreferencesViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string _imageCacheDir = string.Empty;
 
-    // Voice
-    [ObservableProperty]
-    private bool _voiceSystemAvailable;
-
-    [ObservableProperty]
-    private bool _voiceEnabled = true;
-
-    [ObservableProperty]
-    private bool _voicePushToTalkEnabled = true;
-
-    [ObservableProperty]
-    private bool _voiceAutoConnect;
-
-    [ObservableProperty]
-    private int _voiceOutputVolume = 80;
-
-    /// <summary>Available microphone input device names. Passes through from VoiceViewModel.</summary>
-    public ObservableCollection<string> VoiceInputDevices => _voice?.InputDevices ?? _emptyDevices;
-    private static readonly ObservableCollection<string> _emptyDevices = [];
-
-    public string VoiceSelectedInputDevice
-    {
-        get => _voice?.SelectedInputDevice ?? string.Empty;
-        set { if (_voice != null) { _voice.SelectedInputDevice = value; OnPropertyChanged(); } }
-    }
-
-    /// <summary>Exposes the live VoiceViewModel for real-time bindings (mic level, test command).</summary>
-    public VoiceViewModel? Voice => _voice;
+    // MQTT
+    public MqttViewModel? Mqtt { get; }
 
     // VPN
     public VpnViewModel? Vpn { get; }
+
+    // Display Names
+    [ObservableProperty]
+    private int _displayNameMode = 1; // Default: Smart
+
+    public string[] DisplayNameModeOptions { get; } =
+    [
+        "Standard (First Last only)",
+        "Smart (display name + username if different)",
+        "Display name only",
+        "Display name + username (always)",
+    ];
 
     // Grids
     public ObservableCollection<Grid> Grids { get; } = new();
@@ -225,11 +210,12 @@ public partial class PreferencesViewModel : ObservableObject, IDisposable
         ObjectSoundsEnabled = _media.ObjectSoundsEnabled;
     }
 
-    public PreferencesViewModel(RadegastInstanceAvalonia instance, MediaViewModel media, VoiceViewModel? voice = null)
+    public PreferencesViewModel(RadegastInstanceAvalonia instance, MediaViewModel media, RlvViewModel? rlv)
     {
         _instance = instance;
         _media = media;
-        _voice = voice;
+        Rlv = rlv;
+        Mqtt = new MqttViewModel(instance, instance.Mqtt);
         Vpn = new VpnViewModel(instance, instance.Vpn);
         Load();
         _media.PropertyChanged += OnMediaPropertyChanged;
@@ -237,6 +223,7 @@ public partial class PreferencesViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
+        Mqtt?.Dispose();
         Vpn?.Dispose();
         _media.PropertyChanged -= OnMediaPropertyChanged;
     }
@@ -251,31 +238,7 @@ public partial class PreferencesViewModel : ObservableObject, IDisposable
     }
 
     // RLV
-    public bool RlvEnabled
-    {
-        get => _instance.RLV.Enabled;
-        set
-        {
-            if (_instance.RLV.Enabled != value)
-            {
-                _instance.RLV.Enabled = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    public bool RlvDebugEnabled
-    {
-        get => _instance.RLV.EnabledDebugCommands;
-        set
-        {
-            if (_instance.RLV.EnabledDebugCommands != value)
-            {
-                _instance.RLV.EnabledDebugCommands = value;
-                OnPropertyChanged();
-            }
-        }
-    }
+    public RlvViewModel? Rlv { get; }
 
     private void Load()
     {
@@ -304,6 +267,10 @@ public partial class PreferencesViewModel : ObservableObject, IDisposable
             ? s["chat_logging_enabled"].AsBoolean() : true;
         ImageCacheDir = _instance.Client.Settings.ASSET_CACHE_DIR;
 
+        // Display name mode
+        DisplayNameMode = s["display_name_mode"].Type != OSDType.Unknown
+            ? s["display_name_mode"].AsInteger() : 1;
+
         // Grids — apply persisted user grids to the manager, then populate the display list
         if (s["user_grids"] is OSDArray savedUserGrids)
         {
@@ -318,15 +285,6 @@ public partial class PreferencesViewModel : ObservableObject, IDisposable
         foreach (var g in _instance.GridManger.Grids)
             Grids.Add(g);
 
-        // Voice
-        VoiceSystemAvailable = _voice?.IsAvailable ?? false;
-        if (_voice != null)
-        {
-            VoiceEnabled          = _voice.VoiceEnabled;
-            VoicePushToTalkEnabled = _voice.PushToTalkEnabled;
-            VoiceAutoConnect      = _voice.AutoConnect;
-            VoiceOutputVolume     = _voice.OutputVolume;
-        }
     }
 
     public void Apply()
@@ -367,16 +325,6 @@ public partial class PreferencesViewModel : ObservableObject, IDisposable
                 s["texture_cache_dir"] = OSD.FromString(ImageCacheDir);
         }
 
-        // Voice settings — push to VoiceViewModel and save
-        if (_voice != null)
-        {
-            _voice.VoiceEnabled      = VoiceEnabled;
-            _voice.PushToTalkEnabled  = VoicePushToTalkEnabled;
-            _voice.AutoConnect        = VoiceAutoConnect;
-            _voice.OutputVolume       = VoiceOutputVolume;
-            _voice.SaveSettings();
-        }
-
         // User grids — persist all non-built-in grids
         var userGrids = new OSDArray();
         foreach (var g in _instance.GridManger.Grids)
@@ -398,5 +346,10 @@ public partial class PreferencesViewModel : ObservableObject, IDisposable
             });
         }
         s["user_grids"] = userGrids;
+
+        // Display name mode
+        s["display_name_mode"] = OSD.FromInteger(DisplayNameMode);
+        _instance.Names.Mode = (Radegast.NameMode)DisplayNameMode;
+        _instance.Names.CleanCache();
     }
 }

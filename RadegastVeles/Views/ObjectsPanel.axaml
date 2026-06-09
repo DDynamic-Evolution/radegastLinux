@@ -68,7 +68,6 @@
                     <Button Content="Turn To"  Command="{Binding TurnToCommand}"        Margin="0,0,4,4" MinWidth="68" AutomationProperties.Name="Turn toward object" />
                     <Button Content="{Binding PointButtonText}" Command="{Binding PointAtCommand}" Margin="0,0,4,4" MinWidth="68" AutomationProperties.Name="Point at object" />
                     <Button Content="Contents" Command="{Binding ViewContentsCommand}" Margin="0,0,4,4" MinWidth="68" AutomationProperties.Name="View object contents" />
-                    <Button Content="View 3D"  Command="{Binding View3DCommand}"       Margin="0,0,4,4" MinWidth="68" AutomationProperties.Name="View object in 3D" />
                     <Button Content="Take"     Command="{Binding TakeObjectCommand}"    Margin="0,0,4,4" MinWidth="68" AutomationProperties.Name="Take object into inventory" />
                     <Button Content="Pay"      Command="{Binding PayObjectCommand}"     Margin="0,0,4,4" MinWidth="68" AutomationProperties.Name="Pay object" />
                     <Button Content="{Binding BuyButtonText}" Command="{Binding BuyObjectCommand}"

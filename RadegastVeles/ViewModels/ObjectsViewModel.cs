@@ -444,13 +444,6 @@ public partial class ObjectsViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private void View3D()
-    {
-        if (SelectedObject == null) return;
-        _instance.ShowPrimViewer(SelectedObject.LocalId, SelectedObject.Name);
-    }
-
-    [RelayCommand]
     private void TouchObject()
     {
         if (SelectedObject == null) return;

@@ -46,12 +46,6 @@ public static class AvatarMenuBuilder
             Header = "View Profile",
             Command = new RelayCommand(() => instance.ShowAgentProfile(agentName, agentId))
         });
-        menu.Items.Add(new MenuItem
-        {
-            Header = "3D View",
-            Command = new RelayCommand(() => instance.ShowAvatarViewer(agentId, agentName))
-        });
-
         if (!isSelf && agentId != UUID.Zero)
         {
             menu.Items.Add(new MenuItem

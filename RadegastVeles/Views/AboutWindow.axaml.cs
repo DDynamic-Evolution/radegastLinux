@@ -176,6 +176,9 @@ public partial class AboutWindow : Window
     private void OnWebsiteClick(object? sender, RoutedEventArgs e) =>
         OpenUrl("https://radegast.life/");
 
+    private void OnRepoClick(object? sender, RoutedEventArgs e) =>
+        OpenUrl("https://github.com/DDynamic-Evolution/radegastLinux");
+
     private void OnCloseClick(object? sender, RoutedEventArgs e) => Close();
 
     internal static void OpenUrl(string url)

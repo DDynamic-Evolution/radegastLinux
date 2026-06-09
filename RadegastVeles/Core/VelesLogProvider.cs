@@ -18,6 +18,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Microsoft.Extensions.Logging;
 
@@ -46,10 +47,21 @@ public sealed class VelesLogProvider : ILoggerProvider
     private static StreamWriter? s_fileWriter;
     private static readonly object s_fileLock = new();
 
+    private static readonly List<VelesLogEntry> s_backlog = new();
+    private const int MaxBacklog = 2000;
+
     public static event EventHandler<VelesLogEventArgs> LogReceived
     {
         add { lock (s_lock) { s_logReceived += value; } }
         remove { lock (s_lock) { s_logReceived -= value; } }
+    }
+
+    public static IReadOnlyList<VelesLogEntry> GetBacklog()
+    {
+        lock (s_fileLock)
+        {
+            return s_backlog.ToArray();
+        }
     }
 
     private static string? s_filePath;
@@ -84,6 +96,13 @@ public sealed class VelesLogProvider : ILoggerProvider
         }
 
         WriteToFile(entry);
+
+        lock (s_fileLock)
+        {
+            s_backlog.Add(entry);
+            while (s_backlog.Count > MaxBacklog)
+                s_backlog.RemoveAt(0);
+        }
     }
 
     private static void WriteToFile(VelesLogEntry entry)

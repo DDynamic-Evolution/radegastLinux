@@ -36,12 +36,11 @@
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.13" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.13" />
     <PackageReference Include="BugSplatDotNetStandard" Version="4.3.0" />
-    <PackageReference Include="OpenTK.Graphics" Version="4.9.4" />
-    <PackageReference Include="OpenTK.Mathematics" Version="4.9.4" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.11" />
-    <PackageReference Include="LibreMetaverse.Voice.WebRTC" Version="2.6.4" />
+
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.5" />
+    <PackageReference Include="MQTTnet" Version="5.1.0.1559" />
     <PackageReference Include="SkiaSharp" Version="3.119.2" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.119.2" />
   </ItemGroup>
@@ -50,7 +49,9 @@
   </ItemGroup>
   <ItemGroup>
     <AvaloniaResource Include="Assets\radegast.ico" />
-    <AvaloniaResource Include="Rendering\shader_data\*" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(OS)' != 'Windows_NT'">
+    <None Include="..\Radegast.Core\assemblies\libfmod.so.12.10" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Link="libfmod.so" />
   </ItemGroup>
   <Import Project="AutogenerateFiles.targets" />
   <Target Name="GenerateVelesFiles" BeforeTargets="BeforeBuild">

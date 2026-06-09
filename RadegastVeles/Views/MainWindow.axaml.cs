@@ -18,7 +18,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
@@ -35,8 +34,6 @@ public partial class MainWindow : Window
     private readonly MainViewModel _vm;
     private bool _forceClose;
 
-    private readonly Dictionary<int, PanelHostWindow> _detachedPanels = new();
-    private readonly string[] _panelTitles = ["Chat", "IMs", "World Map", "Objects", "Inventory", "Friends", "Groups", "Media"];
     private LogViewerWindow? _logViewerWindow;
 
     public event EventHandler? LogoutRequested;
@@ -80,14 +77,6 @@ public partial class MainWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         _vm.IM.PropertyChanged -= OnIMPropertyChanged;
-
-        // Re-dock any detached panels so their controls are released properly
-        foreach (var kvp in _detachedPanels)
-        {
-            kvp.Value.Close();
-        }
-        _detachedPanels.Clear();
-
         base.OnClosed(e);
     }
 
@@ -108,11 +97,6 @@ public partial class MainWindow : Window
         => _session.Instance.ShowAgentProfile(
             _session.Instance.Client.Self.Name,
             _session.Instance.Client.Self.AgentID);
-
-    private void OnShowMyAvatarViewerClick(object? sender, RoutedEventArgs e)
-        => _session.Instance.ShowAvatarViewer(
-            _session.Instance.Client.Self.AgentID,
-            _session.Instance.Client.Self.Name);
 
     private void OnShowSearchClick(object? sender, RoutedEventArgs e)
         => _session.Instance?.ShowDirectorySearch();
@@ -156,24 +140,9 @@ public partial class MainWindow : Window
 
     private async void OnPreferencesClick(object? sender, RoutedEventArgs e)
     {
-        var vm = new PreferencesViewModel(_session.Instance, _vm.Media, _vm.Voice);
+        var vm = new PreferencesViewModel(_session.Instance, _vm.Media, _vm.Rlv);
         var window = new PreferencesWindow { DataContext = vm };
         await window.ShowDialog(this);
-    }
-
-    private void OnPttPointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (!e.GetCurrentPoint(null).Properties.IsLeftButtonPressed) return;
-        if (sender is Control ctrl) e.Pointer.Capture(ctrl);
-        _vm.Voice.StartPushToTalk();
-        e.Handled = true;
-    }
-
-    private void OnPttPointerReleased(object? sender, PointerReleasedEventArgs e)
-    {
-        e.Pointer.Capture(null);
-        _vm.Voice.StopPushToTalk();
-        e.Handled = true;
     }
 
     private void OnShowLandInfoClick(object? sender, RoutedEventArgs e)
@@ -187,9 +156,6 @@ public partial class MainWindow : Window
 
     private void OnShowEstateInfoClick(object? sender, RoutedEventArgs e)
         => _session.Instance.ShowEstateProfile();
-
-    private void OnShowHudViewerClick(object? sender, RoutedEventArgs e)
-        => _session.Instance.ShowHudViewer();
 
     private void OnLogoutClick(object? sender, RoutedEventArgs e)
     {
@@ -236,65 +202,5 @@ public partial class MainWindow : Window
         AboutWindow.OpenUrl("https://radegast.life/");
 
     private void OnIssueTrackerClick(object? sender, RoutedEventArgs e) =>
-        AboutWindow.OpenUrl("https://github.com/cinderblocks/radegast/issues");
-
-    #region Panel Docking / Undocking
-
-    private void OnUndockChatClick(object? sender, RoutedEventArgs e) => UndockPanel(0);
-    private void OnUndockIMClick(object? sender, RoutedEventArgs e) => UndockPanel(1);
-    private void OnUndockMapClick(object? sender, RoutedEventArgs e) => UndockPanel(2);
-    private void OnUndockObjectsClick(object? sender, RoutedEventArgs e) => UndockPanel(3);
-    private void OnUndockInventoryClick(object? sender, RoutedEventArgs e) => UndockPanel(4);
-    private void OnUndockFriendsClick(object? sender, RoutedEventArgs e) => UndockPanel(5);
-    private void OnUndockGroupsClick(object? sender, RoutedEventArgs e) => UndockPanel(6);
-    private void OnUndockMediaClick(object? sender, RoutedEventArgs e) => UndockPanel(7);
-
-    private void UndockPanel(int tabIndex)
-    {
-        if (_detachedPanels.ContainsKey(tabIndex)) return;
-
-        var tabControl = this.FindControl<TabControl>("MainTabControl");
-
-        var tabItem = tabControl?.Items[tabIndex] as TabItem;
-
-        var panel = tabItem?.Content as Control;
-        if (panel == null) return;
-
-        // Replace with placeholder
-        if (tabItem != null)
-            tabItem.Content = new TextBlock
-        {
-            Text = $"{_panelTitles[tabIndex]} (Detached)",
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-            FontStyle = Avalonia.Media.FontStyle.Italic,
-            Opacity = 0.6
-        };
-
-        var hostWindow = new PanelHostWindow
-        {
-            Title = $"Radegast Veles - {_panelTitles[tabIndex]} - {_session.AgentName}"
-        };
-        hostWindow.SetPanel(panel);
-
-        var capturedIndex = tabIndex;
-        hostWindow.DockRequested += (_, _) => DockPanel(capturedIndex, hostWindow);
-        _detachedPanels[tabIndex] = hostWindow;
-        hostWindow.Show();
-    }
-
-    private void DockPanel(int tabIndex, PanelHostWindow hostWindow)
-    {
-        var panel = hostWindow.RemovePanel();
-        if (panel == null) return;
-
-        var tabControl = this.FindControl<TabControl>("MainTabControl");
-        var tabItem = tabControl?.Items[tabIndex] as TabItem;
-        if (tabItem != null)
-            tabItem.Content = panel;
-
-        _detachedPanels.Remove(tabIndex);
-    }
-
-    #endregion
+        AboutWindow.OpenUrl("https://github.com/DDynamic-Evolution/radegastLinux/issues");
 }

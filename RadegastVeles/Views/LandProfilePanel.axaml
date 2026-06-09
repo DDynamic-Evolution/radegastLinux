@@ -160,11 +160,7 @@
                             <TextBlock Text="&#x2717;" IsVisible="{Binding !AllowLandmark}" Foreground="Tomato" />
                             <TextBlock Text="Landmark" AutomationProperties.Name="Landmarks allowed" />
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,0,16,4">
-                            <TextBlock Text="&#x2713;" IsVisible="{Binding AllowVoice}" Foreground="LimeGreen" />
-                            <TextBlock Text="&#x2717;" IsVisible="{Binding !AllowVoice}" Foreground="Tomato" />
-                            <TextBlock Text="Voice" AutomationProperties.Name="Voice allowed" />
-                        </StackPanel>
+
                     </WrapPanel>
                 </StackPanel>
             </Border>
@@ -183,8 +179,6 @@
                                   Margin="0,0,16,4" AutomationProperties.Name="Allow build" />
                         <CheckBox Content="Allow Landmark" IsChecked="{Binding EditAllowLandmark}"
                                   Margin="0,0,16,4" AutomationProperties.Name="Allow landmark" />
-                        <CheckBox Content="Allow Voice" IsChecked="{Binding EditAllowVoice}"
-                                  Margin="0,0,16,4" AutomationProperties.Name="Allow voice" />
                         <CheckBox Content="Allow Damage" IsChecked="{Binding EditAllowDamage}"
                                   Margin="0,0,16,4" AutomationProperties.Name="Allow damage" />
                     </WrapPanel>

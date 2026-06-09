@@ -1,0 +1,167 @@
+<!--
+  Radegast Metaverse Client
+  Copyright (c) 2026, Sjofn LLC
+  All rights reserved.
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Radegast.Veles.ViewModels"
+             x:Class="Radegast.Veles.Views.RlvPanel"
+             x:DataType="vm:RlvViewModel"
+             AutomationProperties.Name="RLV panel">
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="8" Spacing="8">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="RLV Status:" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                    <CheckBox Content="Enable RLV" IsChecked="{Binding Enabled}" VerticalAlignment="Center" />
+                    <ToggleButton Content="Live Log" IsChecked="{Binding ShowLiveLog}" VerticalAlignment="Center"
+                                  ToolTip.Tip="Show live RLV command log" />
+                    <CheckBox Content="All Channels" IsChecked="{Binding LogAllChannels}" VerticalAlignment="Center"
+                              IsVisible="{Binding ShowLiveLog}"
+                              ToolTip.Tip="Log messages from all chat channels (not just channel 0)" />
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+
+        <!-- Main content -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,*" Margin="8,0,8,0">
+            <!-- Left: Restrictions & Sources -->
+            <Grid Grid.Column="0" RowDefinitions="*,*" Margin="0,0,4,0">
+                <!-- Active Restrictions -->
+                <DockPanel Grid.Row="0" Margin="0,0,0,4">
+                    <TextBlock DockPanel.Dock="Top" Text="Active Restrictions" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <ListBox ItemsSource="{Binding Restrictions}" AutomationProperties.Name="Active restrictions">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Grid.Column="0" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Source}" Opacity="0.6" FontSize="11" Margin="8,0,0,0" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+
+                <!-- RLV Sources -->
+                <DockPanel Grid.Row="1" Margin="0,4,0,0">
+                    <TextBlock DockPanel.Dock="Top" Text="RLV Sources" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <ListBox ItemsSource="{Binding Sources}" AutomationProperties.Name="RLV sources">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Grid.Column="0" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="1" Text="{Binding RestrictionCount, StringFormat='{}{0} restrictions'}" Opacity="0.6" FontSize="11" Margin="8,0,0,0" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Grid>
+
+            <!-- Right: Live Log or Settings -->
+            <Grid Grid.Column="1" Margin="4,0,0,0">
+                <!-- Live Log -->
+                <DockPanel IsVisible="{Binding ShowLiveLog}">
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
+                        <TextBlock Text="Live RLV Log" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        <Button Content="Clear" Command="{Binding ClearLogCommand}" Padding="8,2" FontSize="11" />
+                    </StackPanel>
+                    <ListBox ItemsSource="{Binding LogEntries}" AutomationProperties.Name="RLV log">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Text}" FontFamily="Consolas,Courier New,monospace" FontSize="11" TextWrapping="NoWrap" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+
+                <!-- Auto-Response Settings -->
+                <ScrollViewer IsVisible="{Binding !ShowLiveLog}" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Auto-Response Settings" FontWeight="SemiBold" />
+                        
+                        <TextBlock Text="Teleport Lure Offers" Opacity="0.7" />
+                        <ComboBox SelectedIndex="{Binding TeleportLureMode}" HorizontalAlignment="Stretch">
+                            <ComboBox.Items>
+                                <x:String>Ask</x:String>
+                                <x:String>Always Accept</x:String>
+                                <x:String>Always Deny</x:String>
+                            </ComboBox.Items>
+                        </ComboBox>
+
+                        <TextBlock Text="Teleport Requests" Opacity="0.7" />
+                        <ComboBox SelectedIndex="{Binding TeleportRequestMode}" HorizontalAlignment="Stretch">
+                            <ComboBox.Items>
+                                <x:String>Ask</x:String>
+                                <x:String>Always Accept</x:String>
+                                <x:String>Always Deny</x:String>
+                            </ComboBox.Items>
+                        </ComboBox>
+
+                        <TextBlock Text="Script Permissions" Opacity="0.7" />
+                        <ComboBox SelectedIndex="{Binding ScriptPermissionMode}" HorizontalAlignment="Stretch">
+                            <ComboBox.Items>
+                                <x:String>Ask</x:String>
+                                <x:String>Always Accept</x:String>
+                                <x:String>Always Deny</x:String>
+                            </ComboBox.Items>
+                        </ComboBox>
+
+                        <TextBlock Text="Group Invites" Opacity="0.7" />
+                        <ComboBox SelectedIndex="{Binding GroupInviteMode}" HorizontalAlignment="Stretch">
+                            <ComboBox.Items>
+                                <x:String>Ask</x:String>
+                                <x:String>Always Accept</x:String>
+                                <x:String>Always Deny</x:String>
+                            </ComboBox.Items>
+                        </ComboBox>
+
+                        <TextBlock Text="Friend Requests" Opacity="0.7" />
+                        <ComboBox SelectedIndex="{Binding FriendRequestMode}" HorizontalAlignment="Stretch">
+                            <ComboBox.Items>
+                                <x:String>Ask</x:String>
+                                <x:String>Always Accept</x:String>
+                                <x:String>Always Deny</x:String>
+                            </ComboBox.Items>
+                        </ComboBox>
+
+                        <Separator Margin="0,8" />
+
+                        <!-- Trust List -->
+                        <TextBlock Text="Trust List" FontWeight="SemiBold" />
+                        <TextBlock Text="Avatars in this list always get the auto-response defined above." Opacity="0.6" FontSize="11" TextWrapping="Wrap" />
+                        <ListBox ItemsSource="{Binding TrustedAvatars}" 
+                                 SelectedItem="{Binding SelectedTrustedAvatar, Mode=TwoWay}"
+                                 Height="120" AutomationProperties.Name="Trusted avatars">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Grid.Column="1" Text="{Binding ModeText}" Opacity="0.6" FontSize="11" Margin="8,0,0,0" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <Button Content="Add" Command="{Binding AddTrustedCommand}" />
+                            <Button Content="Remove" Command="{Binding RemoveTrustedCommand}"
+                                    IsEnabled="{Binding SelectedTrustedAvatar, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+
+        <!-- Footer -->
+        <StackPanel Grid.Row="2" Margin="8" Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="{Binding RestrictionCountText}" Opacity="0.7" />
+            <TextBlock Text="|" Opacity="0.4" />
+            <TextBlock Text="{Binding SourceCountText}" Opacity="0.7" />
+        </StackPanel>
+    </Grid>
+</UserControl>

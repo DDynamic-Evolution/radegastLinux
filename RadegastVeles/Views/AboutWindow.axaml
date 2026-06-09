@@ -57,12 +57,18 @@
                             <Run>Copyright © 2009–2014, Radegast Development Team</Run>
                             <LineBreak />
                             <Run>Copyright © 2016–2026, Sjofn LLC</Run>
+                            <LineBreak />
+                            <Run>Copyright © 2025–2026, Disvail Dynamic</Run>
                         </TextBlock>
                         <TextBlock TextWrapping="Wrap"
                                    Text="Licensed under the GNU Lesser General Public License v3 or later." />
                         <Button Classes="linkButton" Click="OnWebsiteClick"
                                 AutomationProperties.Name="Open Radegast website">
                             <TextBlock Text="https://radegast.life" TextDecorations="Underline" />
+                        </Button>
+                        <Button Classes="linkButton" Click="OnRepoClick"
+                                AutomationProperties.Name="Open repository on GitHub">
+                            <TextBlock Text="https://github.com/DDynamic-Evolution/radegastLinux" TextDecorations="Underline" />
                         </Button>
                         <TextBlock TextWrapping="Wrap" Opacity="0.7" FontSize="11"
                                    Text="Second Life® is a trademark of Linden Research, Inc. Radegast is not affiliated with or sponsored by Linden Research." />
@@ -80,6 +86,9 @@
 
                         <TextBlock Text="Current Maintainer" FontWeight="SemiBold" />
                         <TextBlock Text="Cinder Roxley" Margin="8,0,0,0" />
+
+                        <TextBlock Text="Linux Maintainer" FontWeight="SemiBold" />
+                        <TextBlock Text="Miko Astral" Margin="8,0,0,0" />
 
                         <TextBlock Text="Contributors" FontWeight="SemiBold" />
                         <StackPanel Margin="8,0,0,0" Spacing="2">

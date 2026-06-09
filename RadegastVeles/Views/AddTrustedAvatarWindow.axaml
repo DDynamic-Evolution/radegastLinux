@@ -1,0 +1,37 @@
+<!--
+  Radegast Metaverse Client
+  Copyright (c) 2026, Sjofn LLC
+  All rights reserved.
+-->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Radegast.Veles.Views.AddTrustedAvatarWindow"
+        Title="Add Trusted Avatar"
+        Width="450" Height="280"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+    <StackPanel Margin="16" Spacing="8">
+        <TextBlock Text="Avatar Name" FontWeight="SemiBold" />
+        <TextBox x:Name="NameBox" Watermark="Enter avatar name (required)" />
+        
+        <TextBlock Text="Avatar UUID" FontWeight="SemiBold" />
+        <TextBox x:Name="UuidBox" Watermark="Enter UUID (e.g., 12345678-1234-1234-1234-123456789012)" />
+        
+        <TextBlock Text="Auto-Response Mode" FontWeight="SemiBold" Margin="0,4,0,0" />
+        <ComboBox x:Name="ModeBox" SelectedIndex="0" HorizontalAlignment="Stretch">
+            <ComboBox.Items>
+                <x:String>Ask</x:String>
+                <x:String>Always Accept</x:String>
+                <x:String>Always Deny</x:String>
+            </ComboBox.Items>
+        </ComboBox>
+        
+        <TextBlock x:Name="ErrorText" Foreground="Red" FontSize="11" TextWrapping="Wrap" 
+                   IsVisible="False" Margin="0,4,0,0" />
+        
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,8,0,0">
+            <Button Content="Cancel" Click="OnCancelClick" IsCancel="True" MinWidth="80" />
+            <Button Content="Add" Click="OnAddClick" IsDefault="True" MinWidth="80" />
+        </StackPanel>
+    </StackPanel>
+</Window>

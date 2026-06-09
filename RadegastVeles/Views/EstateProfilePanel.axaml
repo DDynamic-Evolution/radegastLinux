@@ -107,7 +107,6 @@
                     <WrapPanel Orientation="Horizontal">
                         <CheckBox IsChecked="{Binding FlagAllowDamage}"    IsEnabled="False" Content="Damage Enabled"   Margin="0,0,8,4" AutomationProperties.Name="Allow damage flag" />
                         <CheckBox IsChecked="{Binding FlagNoFly}"          IsEnabled="False" Content="No Fly"           Margin="0,0,8,4" AutomationProperties.Name="No fly flag" />
-                        <CheckBox IsChecked="{Binding FlagAllowVoice}"     IsEnabled="False" Content="Voice Enabled"    Margin="0,0,8,4" AutomationProperties.Name="Voice enabled flag" />
                         <CheckBox IsChecked="{Binding FlagSunFixed}"       IsEnabled="False" Content="Fixed Sun"        Margin="0,0,8,4" AutomationProperties.Name="Fixed sun flag" />
                         <CheckBox IsChecked="{Binding FlagBlockTerraform}" IsEnabled="False" Content="Block Terraform"  Margin="0,0,8,4" AutomationProperties.Name="Block terraform flag" />
                         <CheckBox IsChecked="{Binding FlagDirectTeleport}" IsEnabled="False" Content="Direct Teleport"  Margin="0,0,8,4" AutomationProperties.Name="Allow direct teleport flag" />

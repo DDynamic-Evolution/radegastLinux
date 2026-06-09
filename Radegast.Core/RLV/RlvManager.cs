@@ -37,7 +37,7 @@ namespace Radegast.Core.RLV
             {
                 if (instance.GlobalSettings["rlv_enabled"].Type == OSDType.Unknown)
                 {
-                    instance.GlobalSettings["rlv_enabled"] = new OSDBoolean(false);
+                    instance.GlobalSettings["rlv_enabled"] = new OSDBoolean(true);
                 }
 
                 return instance.GlobalSettings["rlv_enabled"].AsBoolean();
@@ -45,11 +45,7 @@ namespace Radegast.Core.RLV
 
             set
             {
-                if (Enabled != instance.GlobalSettings["rlv_enabled"].AsBoolean())
-                {
-                    instance.GlobalSettings["rlv_enabled"] = new OSDBoolean(value);
-                }
-
+                instance.GlobalSettings["rlv_enabled"] = new OSDBoolean(value);
                 rlvService.Enabled = value;
                 if (value)
                 {
@@ -58,27 +54,6 @@ namespace Radegast.Core.RLV
                 else
                 {
                     StopTimer();
-                }
-            }
-        }
-
-        public bool EnabledDebugCommands
-        {
-            get
-            {
-                if (instance.GlobalSettings["rlv_debugcommands"].Type == OSDType.Unknown)
-                {
-                    instance.GlobalSettings["rlv_debugcommands"] = new OSDBoolean(false);
-                }
-
-                return instance.GlobalSettings["rlv_debugcommands"].AsBoolean();
-            }
-
-            set
-            {
-                if (EnabledDebugCommands != instance.GlobalSettings["rlv_debugcommands"].AsBoolean())
-                {
-                    instance.GlobalSettings["rlv_debugcommands"] = new OSDBoolean(value);
                 }
             }
         }
@@ -101,7 +76,6 @@ namespace Radegast.Core.RLV
             actionCallbacks = new RlvActionCallbacks(this.instance);
 
             rlvService = new RlvService(queryCallbacks, actionCallbacks, Enabled);
-            rlvService.Restrictions.RestrictionUpdated += Restrictions_RestrictionUpdated;
 
             instance.COF.AddPolicy(new RlvCOFPolicy(rlvService, this.instance, queryCallbacks));
             instance.Client.Objects.ObjectUpdate += Objects_AttachmentUpdate;
@@ -110,14 +84,6 @@ namespace Radegast.Core.RLV
             if (Enabled)
             {
                 StartTimer();
-            }
-        }
-
-        private void Restrictions_RestrictionUpdated(object sender, LibreMetaverse.RLV.EventArguments.RestrictionUpdatedEventArgs e)
-        {
-            if (EnabledDebugCommands)
-            {
-                instance.ShowNotificationInChat($"[RLV] Restriction Updated: {e.Restriction}");
             }
         }
 

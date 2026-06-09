@@ -20,8 +20,13 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Avalonia.Threading;
+using LibreMetaverse;
 using OpenMetaverse;
+using OpenMetaverse.StructuredData;
+using Radegast.Veles.MQTT;
 using Radegast.Veles.VPN;
 using Radegast.Veles.ViewModels;
 using Radegast.Veles.Views;
@@ -67,11 +72,11 @@ public sealed class RadegastInstanceAvalonia : RadegastInstance
     public void RaiseNotification(NotificationViewModel vm) =>
         NotificationReceived?.Invoke(this, vm);
 
-    /// <summary>The active voice session manager (set by MainViewModel after login).</summary>
-    public VoiceViewModel? Voice { get; internal set; }
-
     /// <summary>VPN tunnel manager (WireGuard helper).</summary>
     public VpnManager Vpn { get; }
+
+    /// <summary>MQTT client manager.</summary>
+    public MqttManager Mqtt { get; } = new();
 
     internal RadegastInstanceAvalonia(string appName, GridClient client)
         : base(appName, client, new NetComAvalonia(client))
@@ -99,6 +104,8 @@ public sealed class RadegastInstanceAvalonia : RadegastInstance
         client.Self.TeleportProgress += Self_TeleportProgress;
         NetCom.InstantMessageReceived += NetCom_InstantMessageReceived;
         NetCom.AlertMessageReceived += NetCom_AlertMessageReceived;
+
+        Mqtt.CommandReceived += OnMqttCommand;
     }
 
     private void Self_ScriptDialog(object? sender, ScriptDialogEventArgs e)
@@ -336,54 +343,6 @@ public sealed class RadegastInstanceAvalonia : RadegastInstance
         });
     }
 
-    public void ShowPrimViewer(uint rootLocalId, string objectName)
-    {
-        Dispatcher.UIThread.Post(() =>
-        {
-            var vm     = new PrimViewerViewModel(this, rootLocalId);
-            var panel  = new Views.PrimViewerPanel { DataContext = vm };
-            var window = new Views.ProfileWindow($"3D View — {objectName}", panel);
-            window.Closed += (_, _) => vm.Dispose();
-            window.Width  = 640;
-            window.Height = 520;
-            window.Show();
-        });
-    }
-
-    public void ShowAvatarViewer(UUID agentId, string agentName)
-    {
-        var sim = Client.Network.CurrentSim;
-        if (sim == null) return;
-        bool avatarKnown = agentId == Client.Self.AgentID
-            || sim.ObjectsAvatars.Values.Any(av => av?.ID == agentId);
-        if (!avatarKnown) return;
-
-        Dispatcher.UIThread.Post(() =>
-        {
-            var vm     = new AvatarViewerViewModel(this, agentId, agentName);
-            var panel  = new Views.AvatarViewerPanel { DataContext = vm };
-            var window = new Views.ProfileWindow($"3D View — {agentName}", panel);
-            window.Closed += (_, _) => vm.Dispose();
-            window.Width  = 640;
-            window.Height = 520;
-            window.Show();
-        });
-    }
-
-    public void ShowHudViewer()
-    {
-        Dispatcher.UIThread.Post(() =>
-        {
-            var vm     = new HudViewerViewModel(this);
-            var panel  = new Views.HudViewerPanel { DataContext = vm };
-            var window = new Views.ProfileWindow("HUD Viewer", panel);
-            window.Closed += (_, _) => vm.Dispose();
-            window.Width  = 820;
-            window.Height = 560;
-            window.Show();
-        });
-    }
-
     public override void ShowLocation(string region, int x, int y, int z) { }
 
     public override void RegisterContextAction(Type omvType, string label, EventHandler handler) { }
@@ -412,6 +371,103 @@ public sealed class RadegastInstanceAvalonia : RadegastInstance
         });
     }
 
+    private void OnMqttCommand(object? sender, MqttCommandEventArgs e)
+    {
+        var topic = e.Topic;
+        var payload = e.Payload;
+
+        // Topic format: {rootTopic}/cmd/{command}
+        var parts = topic.Split('/');
+        if (parts.Length < 2) return;
+        var command = parts[^1];
+
+        switch (command)
+        {
+            case "chat":
+                NetCom.ChatOut(payload, ChatType.Normal, 0);
+                break;
+
+            case "teleport":
+                HandleMqttTeleport(payload);
+                break;
+
+            case "avatars":
+                _ = PublishAvatarsAsync();
+                break;
+        }
+    }
+
+    private void HandleMqttTeleport(string payload)
+    {
+        string? region = null;
+        float x = 128, y = 128, z = 25;
+
+        if (!string.IsNullOrWhiteSpace(payload))
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(payload);
+                var root = doc.RootElement;
+                if (root.TryGetProperty("region", out var r))
+                    region = r.GetString();
+                if (root.TryGetProperty("x", out var px))
+                    x = px.GetSingle();
+                if (root.TryGetProperty("y", out var py))
+                    y = py.GetSingle();
+                if (root.TryGetProperty("z", out var pz))
+                    z = pz.GetSingle();
+            }
+            catch
+            {
+                // treat raw string as region name
+                region = payload;
+            }
+        }
+
+        var sim = Client.Network.CurrentSim;
+        if (string.IsNullOrWhiteSpace(region) && sim != null)
+            region = sim.Name;
+
+        if (string.IsNullOrWhiteSpace(region)) return;
+
+        Task.Run(() => Client.Self.Teleport(region, new Vector3(x, y, z)));
+    }
+
+    private async Task PublishAvatarsAsync()
+    {
+        if (!Mqtt.IsConnected || !Mqtt.Config.SubscribeCommands) return;
+
+        var sim = Client.Network.CurrentSim;
+        if (sim == null) return;
+
+        using var stream = new MemoryStream();
+        using var writer = new Utf8JsonWriter(stream);
+        writer.WriteStartArray();
+
+        foreach (var kv in sim.ObjectsAvatars)
+        {
+            var avatar = kv.Value;
+            if (avatar == null || avatar.ID == UUID.Zero) continue;
+
+            sim.AvatarPositions.TryGetValue(avatar.ID, out var localPos);
+            var globalPos = PositionHelper.ToGlobalPosition(sim.Handle, localPos);
+
+            writer.WriteStartObject();
+            writer.WriteString("id", avatar.ID.ToString());
+            writer.WriteString("name", Names.Get(avatar.ID));
+            writer.WriteNumber("x", Math.Round(globalPos.X, 1));
+            writer.WriteNumber("y", Math.Round(globalPos.Y, 1));
+            writer.WriteNumber("z", Math.Round(globalPos.Z, 1));
+            writer.WriteEndObject();
+        }
+
+        writer.WriteEndArray();
+        writer.Flush();
+
+        var json = System.Text.Encoding.UTF8.GetString(stream.ToArray());
+        await Mqtt.PublishAsync("location/avatars", json);
+    }
+
     public override void CleanUp()
     {
         Client.Self.ScriptDialog -= Self_ScriptDialog;
@@ -420,6 +476,8 @@ public sealed class RadegastInstanceAvalonia : RadegastInstance
         Client.Self.TeleportProgress -= Self_TeleportProgress;
         NetCom.InstantMessageReceived -= NetCom_InstantMessageReceived;
         NetCom.AlertMessageReceived -= NetCom_AlertMessageReceived;
+        Mqtt.CommandReceived -= OnMqttCommand;
+        Mqtt.Dispose();
         Vpn.Dispose();
         ChatLog.Dispose();
         base.CleanUp();
@@ -428,7 +486,12 @@ public sealed class RadegastInstanceAvalonia : RadegastInstance
     private void Self_TeleportProgress(object? sender, TeleportEventArgs e)
     {
         if (e.Status == TeleportStatus.Finished)
+        {
             MediaManager.PlayUISound(UISounds.Teleport);
+
+            if (Mqtt.IsConnected && Mqtt.Config.PublishLocation)
+                _ = PublishAvatarsAsync();
+        }
     }
 }
 

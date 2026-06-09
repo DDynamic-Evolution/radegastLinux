@@ -61,8 +61,6 @@ public partial class LandProfileViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool _allowScripts;
     [ObservableProperty] private bool _allowBuild;
     [ObservableProperty] private bool _allowLandmark;
-    [ObservableProperty] private bool _allowVoice;
-
     // For-sale display
     [ObservableProperty] private bool _isForSale;
     [ObservableProperty] private string _salePriceDisplay = string.Empty;
@@ -91,7 +89,6 @@ public partial class LandProfileViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool _editAllowScripts;
     [ObservableProperty] private bool _editAllowBuild;
     [ObservableProperty] private bool _editAllowLandmark;
-    [ObservableProperty] private bool _editAllowVoice;
     [ObservableProperty] private bool _editAllowDamage;
 
     [ObservableProperty]
@@ -195,7 +192,6 @@ public partial class LandProfileViewModel : ObservableObject, IDisposable
         AllowScripts = (p.Flags & ParcelFlags.AllowOtherScripts) != 0;
         AllowBuild = (p.Flags & ParcelFlags.CreateObjects) != 0;
         AllowLandmark = (p.Flags & ParcelFlags.AllowLandmark) != 0;
-        AllowVoice = (p.Flags & ParcelFlags.AllowVoiceChat) != 0;
 
         IsForSale = (p.Flags & ParcelFlags.ForSale) != 0;
         SalePriceDisplay = IsForSale ? $"L${p.SalePrice:N0}" : string.Empty;
@@ -246,7 +242,6 @@ public partial class LandProfileViewModel : ObservableObject, IDisposable
         EditAllowScripts = (_parcel.Flags & ParcelFlags.AllowOtherScripts) != 0;
         EditAllowBuild = (_parcel.Flags & ParcelFlags.CreateObjects) != 0;
         EditAllowLandmark = (_parcel.Flags & ParcelFlags.AllowLandmark) != 0;
-        EditAllowVoice = (_parcel.Flags & ParcelFlags.AllowVoiceChat) != 0;
         EditAllowDamage = (_parcel.Flags & ParcelFlags.AllowDamage) != 0;
         EditForSale = (_parcel.Flags & ParcelFlags.ForSale) != 0;
         EditSalePrice = _parcel.SalePrice;
@@ -277,7 +272,6 @@ public partial class LandProfileViewModel : ObservableObject, IDisposable
         _parcel.Flags = SetFlag(_parcel.Flags, ParcelFlags.AllowOtherScripts, EditAllowScripts);
         _parcel.Flags = SetFlag(_parcel.Flags, ParcelFlags.CreateObjects, EditAllowBuild);
         _parcel.Flags = SetFlag(_parcel.Flags, ParcelFlags.AllowLandmark, EditAllowLandmark);
-        _parcel.Flags = SetFlag(_parcel.Flags, ParcelFlags.AllowVoiceChat, EditAllowVoice);
         _parcel.Flags = SetFlag(_parcel.Flags, ParcelFlags.AllowDamage, EditAllowDamage);
         _parcel.Flags = SetFlag(_parcel.Flags, ParcelFlags.ForSale, EditForSale);
 

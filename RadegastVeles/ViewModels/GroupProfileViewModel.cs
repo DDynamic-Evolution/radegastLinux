@@ -510,13 +510,6 @@ public partial class GroupProfileViewModel : ObservableObject, IDisposable, ICha
     }
 
     [RelayCommand]
-    private async Task JoinGroupVoice()
-    {
-        if (!IsMember || _instance.Voice == null) return;
-        await _instance.Voice.JoinGroupVoiceAsync(GroupID);
-    }
-
-    [RelayCommand]
     private void ActivateGroup()
     {
         if (!IsMember) return;

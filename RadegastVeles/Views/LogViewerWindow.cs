@@ -216,6 +216,24 @@ public class LogViewerWindow : Window
         Content = dock;
 
         VelesLogProvider.LogReceived += OnLogReceived;
+
+        LoadBacklog();
+    }
+
+    private void LoadBacklog()
+    {
+        var backlog = VelesLogProvider.GetBacklog();
+        foreach (var entry in backlog)
+        {
+            var displayEntry = new LogDisplayEntry(
+                entry.TimeStamp, entry.Level, entry.Category,
+                entry.Message, entry.Exception?.Message);
+            _logEntries.Add(displayEntry);
+            if (MatchesFilter(displayEntry))
+                _filteredEntries.Add(displayEntry);
+        }
+        if (_autoScroll && _filteredEntries.Count > 0)
+            _listBox.ScrollIntoView(_filteredEntries[^1]);
     }
 
     private LogLevel GetMinLevel()
@@ -268,8 +286,9 @@ public class LogViewerWindow : Window
         {
             while (_logEntries.Count >= MaxEntries)
             {
+                var removed = _logEntries[0];
                 _logEntries.RemoveAt(0);
-                if (_filteredEntries.Count > 0 && _filteredEntries[0] == _logEntries[0])
+                if (_filteredEntries.Count > 0 && _filteredEntries[0] == removed)
                     _filteredEntries.RemoveAt(0);
             }
 

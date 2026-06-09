@@ -22,6 +22,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -30,6 +32,7 @@ using LibreMetaverse;
 using LibreMetaverse.RLV;
 using OpenMetaverse;
 using Radegast.Veles.Core;
+using Radegast.Veles.MQTT;
 
 namespace Radegast.Veles.ViewModels;
 
@@ -52,6 +55,9 @@ public partial class NearbyViewModel : ObservableObject, IDisposable, IChatConte
 
     [ObservableProperty]
     private int _selectedChatTypeIndex = 1; // Normal
+
+    [ObservableProperty]
+    private bool _showAllChannels;
 
     [ObservableProperty]
     private string _statusText = string.Empty;
@@ -91,8 +97,6 @@ public partial class NearbyViewModel : ObservableObject, IDisposable, IChatConte
     [ObservableProperty] private bool _canBuild        = true;
     [ObservableProperty] private bool _scriptsAllowed  = true;
     [ObservableProperty] private bool _pushAllowed     = true;
-    [ObservableProperty] private bool _voiceAllowed    = true;
-
     public string HealthText => $"♥ {Health:0}%";
 
     public bool HasRegionName => !string.IsNullOrEmpty(RegionName);
@@ -109,9 +113,6 @@ public partial class NearbyViewModel : ObservableObject, IDisposable, IChatConte
     public ObservableCollection<NearbyAvatar> NearbyAvatars { get; } = [];
     public ObservableCollection<MinimapEntry> MinimapEntries { get; } = [];
     public RadegastInstanceAvalonia Instance => _instance;
-
-    /// <summary>Voice ViewModel — set by MainViewModel after both are constructed.</summary>
-    public VoiceViewModel? Voice { get; internal set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(UnreadTabLabel))]
@@ -319,8 +320,24 @@ public partial class NearbyViewModel : ObservableObject, IDisposable, IChatConte
             if (!string.IsNullOrEmpty(processedMessage))
             {
                 NetCom.ChatOut(processedMessage, type, ch);
+
+                if (_instance.Mqtt.IsConnected && _instance.Mqtt.Config.PublishChatSend)
+                {
+                    _ = _instance.Mqtt.PublishAsync("chat/send",
+                        $"{{\"message\":{JsonEncode(processedMessage)},\"type\":\"{type}\",\"channel\":{ch}}}");
+                }
             }
         }
+    }
+
+    private static string JsonEncode(string s)
+    {
+        s = s.Replace("\\", "\\\\");
+        s = s.Replace("\"", "\\\"");
+        s = s.Replace("\n", "\\n");
+        s = s.Replace("\r", "\\r");
+        s = s.Replace("\t", "\\t");
+        return "\"" + s + "\"";
     }
 
     public void ShowAgentProfile(UUID agentId, string name)
@@ -414,23 +431,53 @@ public partial class NearbyViewModel : ObservableObject, IDisposable, IChatConte
         string prefix = e.Type == ChatType.Shout ? " shouts" :
                         e.Type == ChatType.Whisper ? " whispers" : "";
 
-        string text = e.Message.StartsWith("/me ", StringComparison.OrdinalIgnoreCase)
-            ? e.Message[4..]
-            : $"{prefix}: {e.Message}";
+        // Process RLV relay commands (OwnerSay messages starting with @) and hide from chat
+        if (e.Type == ChatType.OwnerSay && e.Message.StartsWith("@"))
+        {
+            if (_instance.RLV is { Enabled: true })
+            {
+                _ = Task.Run(async () =>
+                {
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+                    await _instance.RLV.ProcessCMD(e, cts.Token).ConfigureAwait(false);
+                });
+                return;
+            }
+        }
 
-        if (e.Message.StartsWith("/me ", StringComparison.OrdinalIgnoreCase))
+        bool isEmote = e.Message.StartsWith("/me ", StringComparison.OrdinalIgnoreCase);
+
+        // RLV: censor chat content when receive is blocked
+        string text;
+        if (_instance.RLV is { Enabled: true } && !_instance.RLV.Permissions.CanReceiveChat(e.Message, e.SourceID.Guid))
+        {
+            text = isEmote ? $"{prefix} ..." : $"{prefix}: ...";
+        }
+        else if (isEmote)
         {
             text = e.Message[4..];
             lineType = ChatLineType.Emote;
         }
+        else
+        {
+            text = $"{prefix}: {e.Message}";
+        }
 
-        AddChatLine(new ChatLine(DateTime.Now, e.FromName, text, lineType, e.SourceID));
+        var displayName = _instance.Names.Get(e.SourceID, e.FromName);
+        AddChatLine(new ChatLine(DateTime.Now, displayName, text, lineType, e.SourceID));
+
+        if (_instance.Mqtt.IsConnected && _instance.Mqtt.Config.PublishChatReceive)
+        {
+            _ = _instance.Mqtt.PublishAsync("chat/receive",
+                $"{{\"from\":{JsonEncode(e.FromName)},\"message\":{JsonEncode(e.Message)},\"type\":\"{e.Type}\",\"source\":\"{e.SourceType}\"}}");
+        }
     }
 
     private void NetCom_ChatSent(object? sender, ChatSentEventArgs e)
     {
-        if (e.Channel == 0) return;
-        AddChatLine(new ChatLine(DateTime.Now, "You", $"(channel {e.Channel}): {e.Message}", ChatLineType.Self, Client.Self.AgentID));
+        if (e.Channel == 0 && !ShowAllChannels) return;
+        var channelInfo = e.Channel == 0 ? "" : $"(channel {e.Channel}): ";
+        AddChatLine(new ChatLine(DateTime.Now, "You", $"{channelInfo}{e.Message}", ChatLineType.Self, Client.Self.AgentID));
     }
 
     private void NetCom_AlertMessageReceived(object? sender, AlertMessageEventArgs e)
@@ -847,7 +894,6 @@ public partial class NearbyViewModel : ObservableObject, IDisposable, IChatConte
         CanBuild       = flags.HasFlag(ParcelFlags.CreateObjects);
         ScriptsAllowed = flags.HasFlag(ParcelFlags.AllowOtherScripts);
         PushAllowed    = !flags.HasFlag(ParcelFlags.RestrictPushObject);
-        VoiceAllowed   = flags.HasFlag(ParcelFlags.AllowVoiceChat);
         IsDamageEnabled = flags.HasFlag(ParcelFlags.AllowDamage);
 
         if (IsDamageEnabled)
@@ -869,7 +915,6 @@ public partial class NearbyViewModel : ObservableObject, IDisposable, IChatConte
         CanBuild = true;
         ScriptsAllowed = true;
         PushAllowed = true;
-        VoiceAllowed = true;
         IsDamageEnabled = false;
         Health = 100f;
     }

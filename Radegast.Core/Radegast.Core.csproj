@@ -68,9 +68,12 @@
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
     <PackageReference Include="System.Threading.RateLimiting" Version="10.0.5" />
   </ItemGroup>
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition=" '$(OS)' == 'Windows_NT' ">
+  <Target Name="PostBuildWindows" AfterTargets="PostBuildEvent" Condition=" '$(OS)' == 'Windows_NT' ">
     <Exec Command="xcopy /y &quot;$(ProjectDir)assemblies\x64&quot; &quot;$(OutDir)dll\x64&quot; /E/I" />
     <Exec Command="xcopy /y &quot;$(ProjectDir)assemblies\x86&quot; &quot;$(OutDir)dll\x86&quot; /E/I" />
     <Exec Command="xcopy /y &quot;$(ProjectDir)assemblies\arm64&quot; &quot;$(OutDir)dll\arm64&quot; /E/I" />
+  </Target>
+  <Target Name="PostBuildUnix" AfterTargets="PostBuildEvent" Condition=" '$(OS)' != 'Windows_NT' ">
+    <Exec Command="cp -f &quot;$(ProjectDir)assemblies/libfmod.so.12.10&quot; &quot;$(OutDir)libfmod.so&quot;" />
   </Target>
 </Project>

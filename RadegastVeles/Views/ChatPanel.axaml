@@ -14,6 +14,13 @@
     <Grid ColumnDefinitions="*,8,260">
         <!-- Left: Chat area -->
         <DockPanel Grid.Column="0">
+            <!-- Options bar -->
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="4,2" Spacing="8">
+                <CheckBox Content="Show all channels" IsChecked="{Binding ShowAllChannels}" 
+                          ToolTip.Tip="Display messages from all chat channels (not just channel 0)"
+                          AutomationProperties.Name="Show all chat channels" />
+            </StackPanel>
+
             <!-- Chat input -->
             <Grid DockPanel.Dock="Bottom" ColumnDefinitions="Auto,*,Auto" Margin="4" AutomationProperties.Name="Chat input area">
                 <ComboBox Grid.Column="0" ItemsSource="{Binding ChatTypes}" SelectedIndex="{Binding SelectedChatTypeIndex}" MinWidth="90" VerticalAlignment="Stretch" AutomationProperties.Name="Chat type selector" />
@@ -154,13 +161,6 @@
                                    ToolTip.Tip="Avatar push restricted"
                                    Margin="0,0,6,0" />
 
-                        <!-- Voice -->
-                        <TextBlock Text="♪" FontSize="13" Foreground="#44BB44"
-                                   IsVisible="{Binding VoiceAllowed}"
-                                   ToolTip.Tip="Voice chat allowed" />
-                        <TextBlock Text="♪" FontSize="13" Foreground="#CC2222"
-                                   IsVisible="{Binding !VoiceAllowed}"
-                                   ToolTip.Tip="Voice chat not allowed" />
                     </WrapPanel>
 
                     <ListBox ItemsSource="{Binding NearbyAvatars}" SelectedItem="{Binding SelectedNearbyAvatar, Mode=TwoWay}" AutomationProperties.Name="Nearby avatars list" ScrollViewer.HorizontalScrollBarVisibility="Disabled">

@@ -59,7 +59,6 @@ public partial class EstateProfileViewModel : ObservableObject, IDisposable
     // Region flags (read-only display)
     [ObservableProperty] private bool _flagAllowDamage;
     [ObservableProperty] private bool _flagNoFly;
-    [ObservableProperty] private bool _flagAllowVoice;
     [ObservableProperty] private bool _flagSunFixed;
     [ObservableProperty] private bool _flagBlockTerraform;
     [ObservableProperty] private bool _flagDirectTeleport;
@@ -151,7 +150,6 @@ public partial class EstateProfileViewModel : ObservableObject, IDisposable
 
         FlagAllowDamage    = sim.Flags.HasFlag(RegionFlags.AllowDamage);
         FlagNoFly          = sim.Flags.HasFlag(RegionFlags.NoFly);
-        FlagAllowVoice     = sim.Flags.HasFlag(RegionFlags.AllowVoice);
         FlagSunFixed       = sim.Flags.HasFlag(RegionFlags.SunFixed);
         FlagBlockTerraform = sim.Flags.HasFlag(RegionFlags.BlockTerraform);
         FlagDirectTeleport = sim.Flags.HasFlag(RegionFlags.AllowDirectTeleport);

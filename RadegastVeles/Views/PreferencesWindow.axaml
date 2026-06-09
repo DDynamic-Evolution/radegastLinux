@@ -6,6 +6,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Radegast.Veles.ViewModels"
+        xmlns:views="using:Radegast.Veles.Views"
         x:Class="Radegast.Veles.Views.PreferencesWindow"
         x:DataType="vm:PreferencesViewModel"
         Title="Preferences"
@@ -36,6 +37,20 @@
                             <Slider Grid.Column="1" Minimum="1" Maximum="{Binding MaxDecodeConcurrency}" Value="{Binding ImageDecodeConcurrency}" AutomationProperties.Name="Image decode concurrency" />
                             <TextBlock Grid.Column="2" Text="{Binding ImageDecodeConcurrency}" VerticalAlignment="Center" HorizontalAlignment="Right" />
                         </Grid>
+                        <Separator />
+                        <TextBlock Text="Display Names" FontWeight="SemiBold" FontSize="14" />
+                        <TextBlock Text="How avatar names are shown in chat and other lists." FontSize="11" Opacity="0.65" TextWrapping="Wrap" />
+                        <ListBox ItemsSource="{Binding DisplayNameModeOptions}"
+                                 SelectedIndex="{Binding DisplayNameMode}"
+                                 HorizontalAlignment="Stretch"
+                                 Height="120"
+                                 AutomationProperties.Name="Display name mode">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding }" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
                         <Separator />
                         <TextBlock Text="Paths" FontWeight="SemiBold" FontSize="14" />
                         <TextBlock Text="Chat Logging" FontWeight="SemiBold" />
@@ -104,78 +119,6 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
-            <TabItem Header="Voice" AutomationProperties.Name="Voice preferences">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="8" Spacing="12">
-
-                        <!-- Master enable toggle — always accessible regardless of hardware -->
-                        <CheckBox Content="Enable Voice Chat"
-                                  IsChecked="{Binding VoiceEnabled}"
-                                  FontWeight="SemiBold"
-                                  AutomationProperties.Name="Enable voice chat" />
-
-                        <TextBlock Text="Voice chat requires the WebRTC/SDL3 audio backend which was not detected."
-                                   FontSize="11" Opacity="0.65"
-                                   IsVisible="{Binding !VoiceSystemAvailable}" />
-
-                        <!-- Everything below is only functional when hardware is present and voice enabled -->
-                        <StackPanel IsEnabled="{Binding VoiceSystemAvailable}" Spacing="12">
-
-                            <Separator />
-                            <TextBlock Text="Connection" FontWeight="SemiBold" FontSize="14" />
-                            <CheckBox Content="Automatically connect to parcel voice on login / region change"
-                                      IsChecked="{Binding VoiceAutoConnect}"
-                                      AutomationProperties.Name="Auto-connect to parcel voice" />
-                            <CheckBox Content="Push-to-Talk (hold the Talk button in the status bar to speak)"
-                                      IsChecked="{Binding VoicePushToTalkEnabled}"
-                                      AutomationProperties.Name="Enable push to talk" />
-
-                            <Separator />
-                            <TextBlock Text="Volumes" FontWeight="SemiBold" FontSize="14" />
-                            <Grid ColumnDefinitions="140,*,40">
-                                <TextBlock Grid.Column="0" Text="Speaker Volume" VerticalAlignment="Center" />
-                                <Slider Grid.Column="1" Minimum="0" Maximum="100" Value="{Binding VoiceOutputVolume}"
-                                        AutomationProperties.Name="Voice speaker volume slider" />
-                                <TextBlock Grid.Column="2" Text="{Binding VoiceOutputVolume, StringFormat='{}{0}%'}"
-                                           VerticalAlignment="Center" HorizontalAlignment="Right" />
-                            </Grid>
-
-                            <Separator />
-                            <TextBlock Text="Microphone" FontWeight="SemiBold" FontSize="14" />
-                            <TextBlock Text="Input Device" Opacity="0.7" />
-                            <ComboBox ItemsSource="{Binding VoiceInputDevices}"
-                                      SelectedItem="{Binding VoiceSelectedInputDevice, Mode=TwoWay}"
-                                      HorizontalAlignment="Stretch"
-                                      AutomationProperties.Name="Voice microphone input device" />
-                            <TextBlock Text="Select the microphone to use for voice chat."
-                                       FontSize="11" Opacity="0.65" />
-
-                            <!-- Mic level meter -->
-                            <TextBlock Text="Input Level" Opacity="0.7" />
-                            <ProgressBar Minimum="0" Maximum="1"
-                                         Value="{Binding Voice.MicLevel}"
-                                         Height="12" CornerRadius="3"
-                                         AutomationProperties.Name="Microphone input level" />
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <Button Content="Test Microphone"
-                                        Command="{Binding Voice.ToggleMicTestCommand}"
-                                        IsVisible="{Binding Voice.IsMicTestActive, Converter={x:Static BoolConverters.Not}}"
-                                        AutomationProperties.Name="Start microphone test" />
-                                <Button Content="Stop Test"
-                                        Command="{Binding Voice.ToggleMicTestCommand}"
-                                        IsVisible="{Binding Voice.IsMicTestActive}"
-                                        AutomationProperties.Name="Stop microphone test" />
-                                <TextBlock Text="Recording…" VerticalAlignment="Center"
-                                           FontSize="11" Opacity="0.7"
-                                           IsVisible="{Binding Voice.IsMicTestActive}" />
-                            </StackPanel>
-                            <TextBlock Text="Click 'Test Microphone' to verify your mic is working. The level bar will animate when sound is detected."
-                                       FontSize="11" Opacity="0.65" TextWrapping="Wrap" />
-
-                        </StackPanel>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
                     <TabItem Header="Grids" AutomationProperties.Name="Grid preferences">
                         <Grid RowDefinitions="*,Auto" Margin="8">
                             <Grid Grid.Row="0" ColumnDefinitions="180,*">
@@ -227,18 +170,72 @@
                         </Grid>
                     </TabItem>
                     <TabItem Header="RLV" AutomationProperties.Name="RLV preferences">
+                        <views:RlvPanel DataContext="{Binding Rlv}" />
+                    </TabItem>
+                    <TabItem Header="MQTT" AutomationProperties.Name="MQTT preferences">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="8" Spacing="12">
-                                <TextBlock Text="Restrained Love Viewer (RLV)"
+                                <TextBlock Text="MQTT"
                                            FontWeight="SemiBold" FontSize="14" />
-                                <TextBlock Text="RLV allows in-world objects and scripts to control certain aspects of your viewer. These settings are only effective when connected to a grid that supports RLV."
+                                <TextBlock Text="Connect to an MQTT broker to publish chat/IM events and receive commands."
                                            TextWrapping="Wrap" FontSize="11" Opacity="0.65" />
-                                <CheckBox Content="Enable RLV"
-                                          IsChecked="{Binding RlvEnabled}"
-                                          AutomationProperties.Name="Enable RLV" />
-                                <CheckBox Content="Enable debug commands (@-commands in chat)"
-                                          IsChecked="{Binding RlvDebugEnabled}"
-                                          AutomationProperties.Name="Enable RLV debug commands" />
+
+                                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                                      VerticalAlignment="Top" Grid.ColumnSpan="2">
+                                    <TextBlock Text="Host:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,4" />
+                                    <TextBox Text="{Binding Mqtt.Host}" Grid.Row="0" Grid.Column="1" Margin="0,0,0,4"
+                                             AutomationProperties.Name="MQTT host" />
+                                    <TextBlock Text="Port:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,4" />
+                                    <TextBox Text="{Binding Mqtt.Port}" Grid.Row="1" Grid.Column="1" Margin="0,0,0,4"
+                                             AutomationProperties.Name="MQTT port" />
+                                    <TextBlock Text="Username:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,4" />
+                                    <TextBox Text="{Binding Mqtt.Username}" Grid.Row="2" Grid.Column="1" Margin="0,0,0,4"
+                                             AutomationProperties.Name="MQTT username" />
+                                    <TextBlock Text="Password:" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,4" />
+                                    <TextBox Text="{Binding Mqtt.Password}" Grid.Row="3" Grid.Column="1" Margin="0,0,0,4"
+                                             AutomationProperties.Name="MQTT password" />
+                                    <TextBlock Text="Root Topic:" Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,4" />
+                                    <TextBox Text="{Binding Mqtt.RootTopic}" Grid.Row="4" Grid.Column="1" Margin="0,0,0,4"
+                                             AutomationProperties.Name="MQTT root topic" />
+                                    <TextBlock Text="QoS:" Grid.Row="5" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,4" />
+                                    <ComboBox SelectedIndex="{Binding Mqtt.Qos}" Grid.Row="5" Grid.Column="1" Margin="0,0,0,4"
+                                              AutomationProperties.Name="MQTT QoS">
+                                        <ComboBox.Items>0 1 2</ComboBox.Items>
+                                    </ComboBox>
+                                <CheckBox Content="Use TLS" IsChecked="{Binding Mqtt.UseTls}"
+                                          Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,4"
+                                          AutomationProperties.Name="Use TLS" />
+                                <CheckBox Content="Auto-connect on startup" IsChecked="{Binding Mqtt.AutoConnect}"
+                                          Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,4"
+                                          AutomationProperties.Name="Auto-connect on startup" />
+                            </Grid>
+
+                                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
+                                    <Button Content="Save" Command="{Binding Mqtt.SaveCommand}"
+                                            AutomationProperties.Name="Save MQTT settings" />
+                                    <Button Content="Disconnect"
+                                            Command="{Binding Mqtt.ToggleConnectionCommand}"
+                                            IsVisible="{Binding Mqtt.IsConnected}"
+                                            AutomationProperties.Name="Disconnect MQTT" />
+                                    <Button Content="Connect"
+                                            Command="{Binding Mqtt.ToggleConnectionCommand}"
+                                            IsVisible="{Binding Mqtt.IsConnected, Converter={x:Static BoolConverters.Not}}"
+                                            AutomationProperties.Name="Connect MQTT" />
+                                </StackPanel>
+
+                                <TextBlock Text="Connected" FontSize="11" Opacity="0.65"
+                                           IsVisible="{Binding Mqtt.IsConnected}" />
+                                <TextBlock Text="Disconnected" FontSize="11" Opacity="0.65"
+                                           IsVisible="{Binding Mqtt.IsConnected, Converter={x:Static BoolConverters.Not}}" />
+
+                                <Separator />
+                                <TextBlock Text="Publish Options" FontWeight="SemiBold" FontSize="12" />
+                                <CheckBox Content="Publish outgoing chat" IsChecked="{Binding Mqtt.PublishChatSend}" />
+                                <CheckBox Content="Publish incoming chat" IsChecked="{Binding Mqtt.PublishChatReceive}" />
+                                <CheckBox Content="Publish outgoing IMs" IsChecked="{Binding Mqtt.PublishImSend}" />
+                                <CheckBox Content="Publish incoming IMs" IsChecked="{Binding Mqtt.PublishImReceive}" />
+                                <CheckBox Content="Publish location" IsChecked="{Binding Mqtt.PublishLocation}" />
+                                <CheckBox Content="Subscribe to commands" IsChecked="{Binding Mqtt.SubscribeCommands}" />
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>

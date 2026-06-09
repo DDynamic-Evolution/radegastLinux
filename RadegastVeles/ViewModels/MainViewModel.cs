@@ -19,6 +19,7 @@
 
 using System;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using OpenMetaverse;
 using Radegast.Veles.Core;
 
@@ -49,9 +50,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
     public FriendsViewModel Friends { get; }
     public GroupsViewModel Groups { get; }
     public MediaViewModel Media { get; }
+    public RlvViewModel Rlv { get; }
     public NotificationQueueViewModel Notifications { get; }
-    public VoiceViewModel Voice { get; }
-
     [ObservableProperty]
     private int _selectedTabIndex;
 
@@ -67,14 +67,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
         Friends = new FriendsViewModel(instance);
         Groups = new GroupsViewModel(instance);
         Media = new MediaViewModel(instance);
+        Rlv = new RlvViewModel(instance);
         Notifications = new NotificationQueueViewModel(instance);
-        Voice = new VoiceViewModel(instance);
-
-        // Expose voice through instance so sub-ViewModels (e.g. GroupProfileViewModel) can access it.
-        _instance.Voice = Voice;
-        // Expose voice through NearbyViewModel so ChatPanel can bind to it.
-        Chat.Voice = Voice;
-
         // Forward status from Chat VM
         Chat.PropertyChanged += (_, e) =>
         {
@@ -113,7 +107,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         Friends.Dispose();
         Groups.Dispose();
         Media.Dispose();
-        Voice.Dispose();
+        Rlv.Dispose();
     }
 
     private void Self_MoneyBalance(object? sender, BalanceEventArgs e)
@@ -164,5 +158,11 @@ public partial class MainViewModel : ObservableObject, IDisposable
         IM.IsActive = value == 1;
         if (value == 0) Chat.ClearUnread();
         if (value == 1) IM.ClearUnread();
+    }
+
+    [RelayCommand]
+    private void TeleportHome()
+    {
+        _instance.Client.Self.RequestTeleport(UUID.Zero);
     }
 }

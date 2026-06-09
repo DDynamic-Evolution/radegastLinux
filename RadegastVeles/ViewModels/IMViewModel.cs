@@ -26,6 +26,7 @@ using CommunityToolkit.Mvvm.Input;
 using LibreMetaverse.RLV;
 using OpenMetaverse;
 using Radegast.Veles.Core;
+using Radegast.Veles.MQTT;
 
 namespace Radegast.Veles.ViewModels;
 
@@ -266,6 +267,7 @@ public partial class IMViewModel : ObservableObject, IDisposable, IChatContext
                     text = "*** IM blocked by sender's viewer";
                 }
                 NetCom.SendInstantMessage(text, session.TargetId, session.SessionId);
+                PublishImSend("personal", session, text);
                 break;
 
             case IMSessionType.Group:
@@ -275,6 +277,7 @@ public partial class IMViewModel : ObservableObject, IDisposable, IChatContext
                 }
                 Client.Self.InstantMessageGroup(session.SessionId, text);
                 AddOutgoingMessage(session, text);
+                PublishImSend("group", session, text);
                 break;
 
             case IMSessionType.Conference:
@@ -284,8 +287,33 @@ public partial class IMViewModel : ObservableObject, IDisposable, IChatContext
                 }
                 Client.Self.InstantMessageGroup(session.SessionId, text);
                 AddOutgoingMessage(session, text);
+                PublishImSend("conference", session, text);
                 break;
         }
+    }
+
+    private void PublishImSend(string type, IMSession session, string text)
+    {
+        if (!_instance.Mqtt.IsConnected || !_instance.Mqtt.Config.PublishImSend) return;
+        _ = _instance.Mqtt.PublishAsync("im/send",
+            $"{{\"to\":{JsonEncode(session.Label)},\"type\":\"{type}\",\"message\":{JsonEncode(text)}}}");
+    }
+
+    private void PublishImReceive(string type, string from, string message)
+    {
+        if (!_instance.Mqtt.IsConnected || !_instance.Mqtt.Config.PublishImReceive) return;
+        _ = _instance.Mqtt.PublishAsync("im/receive",
+            $"{{\"from\":{JsonEncode(from)},\"type\":\"{type}\",\"message\":{JsonEncode(message)}}}");
+    }
+
+    private static string JsonEncode(string s)
+    {
+        s = s.Replace("\\", "\\\\");
+        s = s.Replace("\"", "\\\"");
+        s = s.Replace("\n", "\\n");
+        s = s.Replace("\r", "\\r");
+        s = s.Replace("\t", "\\t");
+        return "\"" + s + "\"";
     }
 
     [RelayCommand]
@@ -389,11 +417,28 @@ public partial class IMViewModel : ObservableObject, IDisposable, IChatContext
     {
         var fromName = _instance.Names.Get(e.IM.FromAgentID, e.IM.FromAgentName);
         var message = ApplyRlvReceiveBlock(e.IM.Message, e.IM.FromAgentID.Guid);
+
+        // Send auto-reply when RLV blocks incoming IM
+        if (_instance.RLV.Enabled && !_instance.RLV.Permissions.CanReceiveIM(e.IM.Message, e.IM.FromAgentID.Guid))
+        {
+            Client.Self.InstantMessage(Client.Self.Name,
+                e.IM.FromAgentID,
+                "***  The Resident you messaged is prevented from reading your instant messages at the moment, please try again later.",
+                e.IM.IMSessionID,
+                InstantMessageDialog.BusyAutoResponse,
+                InstantMessageOnline.Offline,
+                Client.Self.RelativePosition,
+                Client.Network.CurrentSim.ID,
+                null);
+        }
+
         var session = GetOrCreatePersonalSession(e.IM.FromAgentID, fromName);
         AddMessage(session, new ChatLine(DateTime.Now, fromName, $": {message}", ChatLineType.Normal, e.IM.FromAgentID));
         MarkUnreadIfNotSelected(session);
         if (!IsActive)
             VelesNotificationService.Show(fromName, message);
+
+        PublishImReceive("personal", fromName, message);
     }
 
     private void HandleGroupIM(InstantMessageEventArgs e)
@@ -412,6 +457,8 @@ public partial class IMViewModel : ObservableObject, IDisposable, IChatContext
         MarkUnreadIfNotSelected(session);
         if (!IsActive)
             VelesNotificationService.Show(groupName, $"{fromName}: {message}");
+
+        PublishImReceive("group", $"{fromName} ({groupName})", message);
     }
 
     private void HandleConferenceIM(InstantMessageEventArgs e)
@@ -424,6 +471,8 @@ public partial class IMViewModel : ObservableObject, IDisposable, IChatContext
         var fromName = _instance.Names.Get(e.IM.FromAgentID, e.IM.FromAgentName);
         AddMessage(session, new ChatLine(DateTime.Now, fromName, $": {message}", ChatLineType.Normal, e.IM.FromAgentID));
         MarkUnreadIfNotSelected(session);
+
+        PublishImReceive("conference", $"{fromName} ({label})", message);
     }
 
     private void HandleSessionSend(InstantMessageEventArgs e)

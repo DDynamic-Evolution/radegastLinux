@@ -62,7 +62,7 @@ public partial class LoginWindow : Window
         if (instance == null) return;
 
         var media = new MediaViewModel(instance);
-        var vm = new PreferencesViewModel(instance, media);
+        var vm = new PreferencesViewModel(instance, media, null);
         var window = new PreferencesWindow { DataContext = vm };
         await window.ShowDialog(this);
         media.Dispose();
@@ -99,5 +99,5 @@ public partial class LoginWindow : Window
         AboutWindow.OpenUrl("https://radegast.life/");
 
     private void OnIssueTrackerClick(object? sender, RoutedEventArgs e) =>
-        AboutWindow.OpenUrl("https://github.com/cinderblocks/radegast/issues");
+        AboutWindow.OpenUrl("https://github.com/DDynamic-Evolution/radegastLinux/issues");
 }

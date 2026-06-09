@@ -90,11 +90,6 @@ namespace Radegast.Core.RLV
 
         public Task SendReplyAsync(int channel, string message, CancellationToken cancellationToken)
         {
-            if (instance.RLV.EnabledDebugCommands)
-            {
-                instance.ShowNotificationInChat($"[RLV] Send channel {channel}: {message}");
-            }
-
             instance.Client.Self.Chat(message, channel, ChatType.Normal);
             return Task.CompletedTask;
         }

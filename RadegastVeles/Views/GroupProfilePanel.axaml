@@ -40,8 +40,6 @@
                                 IsVisible="{Binding IsMember}" AutomationProperties.Name="Leave group" />
                         <Button Content="Chat" Command="{Binding OpenGroupChatCommand}"
                                 IsVisible="{Binding IsMember}" AutomationProperties.Name="Open group chat" />
-                        <Button Content="Voice" Command="{Binding JoinGroupVoiceCommand}"
-                                IsVisible="{Binding IsMember}" AutomationProperties.Name="Join group voice" />
                         <Button Content="Activate" Command="{Binding ActivateGroupCommand}"
                                 IsVisible="{Binding IsMember}" AutomationProperties.Name="Activate group" />
                     </StackPanel>

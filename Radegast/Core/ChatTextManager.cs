@@ -272,10 +272,7 @@ namespace Radegast
                     }
                 });
 
-                if (!rlv.EnabledDebugCommands)
-                {
-                    return;
-                }
+                return;
             }
 
             ChatBufferItem item = new ChatBufferItem { ID = e.SourceID, RawMessage = e };

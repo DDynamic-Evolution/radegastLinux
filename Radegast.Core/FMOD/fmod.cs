@@ -866,12 +866,12 @@ namespace FMOD
     {
         public static RESULT System_Create(out System system)
         {
-            return FMOD5_System_Create(out system.handle);
+            return FMOD5_System_Create(out system.handle, VERSION.number);
         }
 
         #region importfunctions
         [DllImport(VERSION.dll)]
-        private static extern RESULT FMOD5_System_Create(out IntPtr system);
+        private static extern RESULT FMOD5_System_Create(out IntPtr system, uint headerversion);
 
         #endregion
     }
