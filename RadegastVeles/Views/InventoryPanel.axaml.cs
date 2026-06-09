@@ -18,11 +18,14 @@
  */
 
 using System;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
 using Radegast.Veles.Controls;
 using Radegast.Veles.Core;
@@ -86,8 +89,11 @@ public partial class InventoryPanel : UserControl
             searchList.PointerReleased  += InvTree_PointerReleased;
         }
 
-        _vm.EditorRequested     += OnEditorRequested;
-        _vm.PropertiesRequested += OnPropertiesRequested;
+        _vm.EditorRequested      += OnEditorRequested;
+        _vm.PropertiesRequested  += OnPropertiesRequested;
+        _vm.ScriptExportRequested += OnScriptExportRequested;
+        _vm.FolderExportRequested += OnFolderExportRequested;
+        _vm.ScriptImportRequested += OnScriptImportRequested;
 
         var btnFilter = this.FindControl<Button>("BtnFilter");
         if (btnFilter != null) btnFilter.Click += BtnFilter_Click;
@@ -110,8 +116,11 @@ public partial class InventoryPanel : UserControl
         base.OnUnloaded(e);
         if (_vm != null)
         {
-            _vm.EditorRequested     -= OnEditorRequested;
-            _vm.PropertiesRequested -= OnPropertiesRequested;
+            _vm.EditorRequested      -= OnEditorRequested;
+            _vm.PropertiesRequested  -= OnPropertiesRequested;
+            _vm.ScriptExportRequested -= OnScriptExportRequested;
+            _vm.FolderExportRequested -= OnFolderExportRequested;
+            _vm.ScriptImportRequested -= OnScriptImportRequested;
         }
 
         _filterWindow?.Close();
@@ -608,6 +617,75 @@ public partial class InventoryPanel : UserControl
             window.Show(owner);
         else
             window.Show();
+    }
+
+    // ── LSL Import / Export ─────────────────────────────────────────────────
+
+    private async void OnScriptExportRequested(object? sender, ScriptExportRequestedEventArgs e)
+    {
+        if (_vm == null) return;
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel == null) return;
+
+        var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Export Script",
+            SuggestedFileName = SanitizeFileName(e.ScriptNode.Name) + ".lsl",
+            FileTypeChoices =
+            [
+                new FilePickerFileType("LSL script") { Patterns = ["*.lsl"] }
+            ]
+        });
+
+        if (file != null)
+            await _vm.ExportScriptToFileAsync(e.ScriptNode, file.Path.AbsolutePath);
+    }
+
+    private async void OnFolderExportRequested(object? sender, FolderExportRequestedEventArgs e)
+    {
+        if (_vm == null) return;
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel == null) return;
+
+        var dir = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Export All Scripts To...",
+            AllowMultiple = false
+        });
+
+        if (dir.Count > 0)
+            await _vm.ExportFolderScriptsAsync(e.FolderNode, dir[0].Path.AbsolutePath);
+    }
+
+    private async void OnScriptImportRequested(object? sender, EventArgs e)
+    {
+        if (_vm == null) return;
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel == null) return;
+
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Import LSL Scripts",
+            AllowMultiple = true,
+            FileTypeFilter =
+            [
+                new FilePickerFileType("LSL scripts") { Patterns = ["*.lsl"] },
+                new FilePickerFileType("Text files") { Patterns = ["*.txt"] },
+                new FilePickerFileType("All files") { Patterns = ["*"] }
+            ]
+        });
+
+        if (files.Count > 0)
+        {
+            var paths = files.Select(f => f.Path.AbsolutePath).ToArray();
+            await _vm.ImportScriptsIntoFolderAsync(paths, _vm.SelectedNode?.IsFolder == true ? _vm.SelectedNode : null);
+        }
+    }
+
+    private static string SanitizeFileName(string name)
+    {
+        var invalid = Path.GetInvalidFileNameChars();
+        return string.Concat(name.Select(c => invalid.Contains(c) ? '_' : c));
     }
 
     // ── New window (pop-out inventory) ───────────────────────────────────────

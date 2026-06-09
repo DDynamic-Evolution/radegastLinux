@@ -29,6 +29,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OpenMetaverse;
+using OpenMetaverse.Assets;
 using Radegast.Veles.Core;
 using InvClipboard = Radegast.Veles.Core.InventoryClipboard;
 using InvClipboardMode = Radegast.Veles.Core.InventoryClipboardMode;
@@ -563,6 +564,9 @@ public partial class InventoryViewModel : ObservableObject, IDisposable
     }
 
     public event EventHandler<InventoryEditorRequestedEventArgs>? EditorRequested;
+    public event EventHandler<ScriptExportRequestedEventArgs>? ScriptExportRequested;
+    public event EventHandler<FolderExportRequestedEventArgs>? FolderExportRequested;
+    public event EventHandler<EventArgs>? ScriptImportRequested;
 
     [RelayCommand(CanExecute = nameof(CanOpenItem))]
     private void OpenItem()
@@ -798,6 +802,110 @@ public partial class InventoryViewModel : ObservableObject, IDisposable
             SelectedNode.ItemId, "New Script", string.Empty,
             AssetType.LSLText, UUID.Random(), InventoryType.LSL,
             PermissionMask.All, (_, _) => { });
+    }
+
+    // ── LSL Import / Export ──────────────────────────────────────────────────
+
+    [RelayCommand]
+    private void ExportScript()
+    {
+        if (SelectedNode == null || SelectedNode.IsFolder || SelectedNode.TypeName != "Script") return;
+        ScriptExportRequested?.Invoke(this, new ScriptExportRequestedEventArgs(SelectedNode));
+    }
+
+    [RelayCommand]
+    private void ExportFolderScripts()
+    {
+        if (SelectedNode == null || !SelectedNode.IsFolder) return;
+        FolderExportRequested?.Invoke(this, new FolderExportRequestedEventArgs(SelectedNode));
+    }
+
+    [RelayCommand]
+    private void ImportScript()
+    {
+        ScriptImportRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    public async Task ExportScriptToFileAsync(InvTreeNode node, string savePath)
+    {
+        if (!Inventory.TryGetValue<InventoryLSL>(node.ItemId, out var lslItem)) return;
+        var tcs = new TaskCompletionSource<string?>();
+        Client.Assets.RequestInventoryAsset(lslItem, true, UUID.Random(), (transfer, asset) =>
+        {
+            if (!transfer.Success || asset is not AssetScriptText scriptAsset)
+            {
+                tcs.TrySetResult(null);
+                return;
+            }
+            scriptAsset.Decode();
+            tcs.TrySetResult(scriptAsset.Source);
+        });
+        var source = await tcs.Task;
+        if (source != null)
+            await File.WriteAllTextAsync(savePath, source);
+    }
+
+    public async Task ExportFolderScriptsAsync(InvTreeNode folderNode, string targetDir)
+    {
+        var scripts = CollectScriptNodes(folderNode);
+        foreach (var scriptNode in scripts)
+        {
+            var savePath = Path.Combine(targetDir, SanitizeFileName(scriptNode.Name) + ".lsl");
+            await ExportScriptToFileAsync(scriptNode, savePath);
+        }
+    }
+
+    public async Task ImportScriptsIntoFolderAsync(string[] filePaths, InvTreeNode? targetFolder)
+    {
+        var parentId = targetFolder?.ItemId ?? SelectedNode?.ItemId;
+        if (parentId == null) return;
+        foreach (var filePath in filePaths)
+        {
+            var source = await File.ReadAllTextAsync(filePath);
+            var name = SanitizeFileName(Path.GetFileNameWithoutExtension(filePath));
+            if (string.IsNullOrWhiteSpace(name)) name = "Imported Script";
+
+            var tcs = new TaskCompletionSource<UUID>();
+            Client.Inventory.RequestCreateItem(
+                parentId.Value, name, string.Empty,
+                AssetType.LSLText, UUID.Random(), InventoryType.LSL,
+                PermissionMask.All, (ok, item) =>
+                {
+                    if (ok && item != null) tcs.TrySetResult(item.UUID);
+                    else tcs.TrySetResult(UUID.Zero);
+                });
+            var newItemId = await tcs.Task;
+            if (newItemId == UUID.Zero) continue;
+
+            var scriptAsset = new AssetScriptText { Source = source };
+            scriptAsset.Encode();
+            var saveTcs = new TaskCompletionSource<bool>();
+            Client.Inventory.RequestUpdateScriptAgentInventoryAsync(
+                scriptAsset.AssetData, newItemId, true,
+                (uploadSuccess, _, _, _, _, _) => saveTcs.TrySetResult(uploadSuccess),
+                CancellationToken.None);
+            await saveTcs.Task;
+        }
+    }
+
+    private static List<InvTreeNode> CollectScriptNodes(InvTreeNode node)
+    {
+        var result = new List<InvTreeNode>();
+        if (!node.IsFolder)
+        {
+            if (node.TypeName == "Script")
+                result.Add(node);
+            return result;
+        }
+        foreach (var child in node.Children)
+            result.AddRange(CollectScriptNodes(child));
+        return result;
+    }
+
+    private static string SanitizeFileName(string name)
+    {
+        var invalid = Path.GetInvalidFileNameChars();
+        return string.Concat(name.Select(c => invalid.Contains(c) ? '_' : c));
     }
 
     // ── Trash ────────────────────────────────────────────────────────────────
@@ -2067,6 +2175,18 @@ public class ItemPropertiesRequestedEventArgs : EventArgs
 {
     public InventoryItem Item { get; }
     public ItemPropertiesRequestedEventArgs(InventoryItem item) => Item = item;
+}
+
+public class ScriptExportRequestedEventArgs : EventArgs
+{
+    public InvTreeNode ScriptNode { get; }
+    public ScriptExportRequestedEventArgs(InvTreeNode scriptNode) => ScriptNode = scriptNode;
+}
+
+public class FolderExportRequestedEventArgs : EventArgs
+{
+    public InvTreeNode FolderNode { get; }
+    public FolderExportRequestedEventArgs(InvTreeNode folderNode) => FolderNode = folderNode;
 }
 
 public enum InventorySortMode

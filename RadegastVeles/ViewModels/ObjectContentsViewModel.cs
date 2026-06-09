@@ -185,6 +185,33 @@ public partial class ObjectContentsViewModel : ObservableObject, IDisposable
         }
     }
 
+    [RelayCommand]
+    private void CreateScript()
+    {
+        var sim = Client.Network.CurrentSim;
+        if (sim == null) return;
+        StatusText = "Creating new script…";
+
+        var folder = Client.Inventory.FindFolderForType(AssetType.LSLText);
+        Client.Inventory.RequestCreateItem(
+            folder, "New Script", string.Empty,
+            AssetType.LSLText, UUID.Random(), InventoryType.LSL,
+            PermissionMask.All, (ok, item) =>
+            {
+                if (!ok || item == null)
+                {
+                    Dispatcher.UIThread.Post(() => StatusText = "Failed to create script.");
+                    return;
+                }
+                Client.Inventory.CopyScriptToTask(LocalId, item, true, sim);
+                Dispatcher.UIThread.Post(() =>
+                {
+                    StatusText = $"Added '{item.Name}' to object.";
+                    RefreshCommand.Execute(null);
+                });
+            });
+    }
+
     private static T PromoteItem<T>(InventoryItem source) where T : InventoryItem
     {
         var typed = (T)Activator.CreateInstance(typeof(T), source.UUID)!;

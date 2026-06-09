@@ -25,7 +25,7 @@
             <!-- Radius and sort -->
             <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="4,0,4,4" Spacing="4">
                 <TextBlock Text="Radius:" VerticalAlignment="Center" />
-                <NumericUpDown Value="{Binding SearchRadius}" Minimum="1" Maximum="512" Width="100" AutomationProperties.Name="Search radius in meters" />
+                <NumericUpDown Value="{Binding SearchRadius}" Minimum="1" Maximum="512" Width="140" AutomationProperties.Name="Search radius in meters" />
                 <TextBlock Text="m" VerticalAlignment="Center" />
                 <TextBlock Text="Sort:" VerticalAlignment="Center" Margin="8,0,0,0" />
                 <ComboBox ItemsSource="{Binding SortOptions}" SelectedIndex="{Binding SortIndex}" MinWidth="110" AutomationProperties.Name="Sort order" />

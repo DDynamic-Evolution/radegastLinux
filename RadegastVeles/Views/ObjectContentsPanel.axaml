@@ -31,6 +31,10 @@
                         IsVisible="{Binding CanOpenSelected}"
                         Margin="0,0,4,0" MinWidth="72"
                         AutomationProperties.Name="Open selected item" />
+                <Button Content="&#x2795; New Script"
+                        Command="{Binding CreateScriptCommand}"
+                        Margin="0,0,4,0" MinWidth="90"
+                        AutomationProperties.Name="Create a new script in this object" />
                 <Button Content="&#x1F5D1; Delete"
                         Command="{Binding DeleteItemCommand}"
                         IsEnabled="{Binding CanDeleteSelected}"
@@ -90,6 +94,10 @@
             </ListBox.ItemTemplate>
             <ListBox.ContextMenu>
                 <ContextMenu>
+                    <MenuItem Header="&#x2795; New Script"
+                              Command="{Binding CreateScriptCommand}"
+                              AutomationProperties.Name="Create a new script" />
+                    <Separator />
                     <MenuItem Header="&#x1F4CB; Copy to Inventory"
                               Command="{Binding CopyToInventoryCommand}"
                               AutomationProperties.Name="Copy to inventory" />

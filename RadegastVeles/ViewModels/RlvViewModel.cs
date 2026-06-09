@@ -80,7 +80,7 @@ public partial class RlvViewModel : ObservableObject, IDisposable
     public RlvViewModel(RadegastInstanceAvalonia instance)
     {
         _instance = instance;
-        _enabled = instance.RLV?.Enabled ?? false;
+        _enabled = LoadEnabled();
         UpdateStatusText();
 
         if (instance.RLV != null)
@@ -122,11 +122,25 @@ public partial class RlvViewModel : ObservableObject, IDisposable
 
     partial void OnEnabledChanged(bool value)
     {
+        SaveEnabled(value);
         if (_instance.RLV != null)
         {
             _instance.RLV.Enabled = value;
         }
         UpdateStatusText();
+    }
+
+    private bool LoadEnabled()
+    {
+        var s = _instance.GlobalSettings;
+        if (s["rlv_enabled"].Type == OSDType.Unknown)
+            s["rlv_enabled"] = new OSDBoolean(true);
+        return s["rlv_enabled"].AsBoolean();
+    }
+
+    private void SaveEnabled(bool value)
+    {
+        _instance.GlobalSettings["rlv_enabled"] = new OSDBoolean(value);
     }
 
     private void UpdateStatusText()

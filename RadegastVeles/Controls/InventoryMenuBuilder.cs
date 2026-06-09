@@ -91,6 +91,9 @@ public static class InventoryMenuBuilder
         Add(menu, "New Notecard", () => vm.CreateNotecardCommand.Execute(null));
         Add(menu, "New Script",   () => vm.CreateScriptCommand.Execute(null));
         Sep(menu);
+        Add(menu, "Export All Scripts...", () => vm.ExportFolderScriptsCommand.Execute(null));
+        Add(menu, "Import Scripts...",     () => vm.ImportScriptCommand.Execute(null));
+        Sep(menu);
 
         if (vm.IsTrashFolder(node))
         {
@@ -140,12 +143,13 @@ public static class InventoryMenuBuilder
         switch (node.TypeName)
         {
             case "Notecard":
-            case "Script":
-            case "Texture":
-            case "Snapshot":
-            case "Sound":
-            case "Calling Card":
                 Add(menu, "Open", () => vm.OpenItemCommand.Execute(null));
+                addedPrimary = true;
+                break;
+            case "Script":
+                Add(menu, "Open", () => vm.OpenItemCommand.Execute(null));
+                Sep(menu);
+                Add(menu, "Export Script...", () => vm.ExportScriptCommand.Execute(null));
                 addedPrimary = true;
                 break;
 

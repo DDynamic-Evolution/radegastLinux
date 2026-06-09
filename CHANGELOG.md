@@ -1,6 +1,6 @@
 # Changelog – Radegast Veles
 
-## 0.1.2 – 2026-06-09
+## 0.1.3 – 2026-06-09
 
 ### Added
 
@@ -9,16 +9,24 @@
 - **Lua Scripting Preferences tab** – Script list with running-status indicator, Reload All / Reload Selected / Open Scripts Folder buttons, real-time console output
 - **Lua API documentation** – `RadegastVeles/Scripting/API.md` with full reference for script authors
 - **Script auto-discovery** – `.lua` files in `~/.local/share/RadegastVeles/scripts/` are detected and loaded on startup; scripts start/stop on connect/disconnect
+- **LSL script import/export** – Export individual scripts or batch-export all scripts in a folder to `.lsl` files; import one or more `.lsl` files as new inventory scripts. Accessible via right-click context menus on Script items and folders.
+- **New Script in Object Contents** – Create new empty scripts inside an object's task inventory from the Contents panel toolbar or context menu. Creates a "New Script" in your inventory and copies it into the object.
 
 ### Changed
 
 - **LuaPlugin callback mechanism** – Replaced broken `RegisterCallback` dictionary with globals lookup (`GetHook`); scripts now use natural assignment (`on_chat = function(...) end`) instead of function-call registration
 - **Preferences window** – Now resizable (`CanResize="True"`, `MinWidth="480"`, `MinHeight="400"`); increased default size from 540×500 to 640×540
+- **Objects search radius** – NumericUpDown width increased from 100 to 140 for easier editing
 
 ### Fixed
 
+- **RLV enabled state not persisting across restarts** – `RlvViewModel._enabled` relied on `instance.RLV?.Enabled` which is `null` before login; toggle before login was silently lost. Now reads/writes `GlobalSettings["rlv_enabled"]` directly via `LoadEnabled()`/`SaveEnabled()`, independent of `RlvManager` lifecycle.
 - **LuaPlugin hooks never firing** – `on_start`/`on_stop`/`on_chat`/`on_im` etc. were looked up in an empty `_callbacks` dictionary (the `RegisterCallback` delegate was overwritten by Lua assignment). Now hooks are read directly from `_script.Globals` via `GetHook()`, matching the example script pattern.
 - **Lua build errors** – `Logger.Log`→`Logger.Warn` (no 1-arg overload), `FileScriptLoader`→`FileSystemScriptLoader` (MoonSharp 2.0 rename), `ChatEventArgs.Channel/SourceName`→`e.Type`/`e.FromName`
+
+## 0.1.2 – 2026-06-09
+
+Initial stable release of Radegast Veles.
 
 ## 0.1.1 – 2026-06-09
 
