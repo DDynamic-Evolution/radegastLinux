@@ -23,7 +23,7 @@ VERSION="${VERSION:-$(git -C "$REPO_DIR" describe --tags --always --dirty 2>/dev
 VERSION="${VERSION#v}"
 DEB_DIR="/tmp/$PKG_NAME-deb"
 BUILD_DIR="/tmp/$PKG_NAME-build"
-PKG_DIR="$DEB_DIR/$PKG_NAME\_$VERSION\_$ARCH"
+PKG_DIR="$DEB_DIR/${PKG_NAME}_${VERSION}_${ARCH}"
 
 echo "=== Radegast Veles .deb Builder ==="
 echo "Version: $VERSION"
@@ -55,8 +55,8 @@ fi
 # Step 3: Build VPN helper (optional)
 echo "[3/5] Building VPN helper..."
 VPN_HELPER_SRC="$REPO_DIR/RadegastVeles/VPN/helper"
-if [ -d "$VPN_HELPER_SRC" ] && command -v go &>/dev/null; then
-    go build -o "$BUILD_DIR/vpn-helper" "$VPN_HELPER_SRC" 2>&1 || true
+if [ -d "$VPN_HELPER_SRC" ] && [ -f "$VPN_HELPER_SRC/go.mod" ] && command -v go &>/dev/null; then
+    (cd "$VPN_HELPER_SRC" && go build -o "$BUILD_DIR/vpn-helper" .) 2>&1 || true
 fi
 
 # Step 4: Create package structure
@@ -177,14 +177,14 @@ echo "[5/5] Building .deb package..."
 fakeroot dpkg-deb --build "$PKG_DIR" 2>&1
 
 # Copy result
-mv "$DEB_DIR/$PKG_NAME\_$VERSION\_$ARCH.deb" "$REPO_DIR/"
+mv "$DEB_DIR/${PKG_NAME}_${VERSION}_${ARCH}.deb" "$REPO_DIR/"
 
 echo ""
 echo "=== Done! ==="
-echo "Package: $REPO_DIR/$PKG_NAME\_$VERSION\_$ARCH.deb"
+echo "Package: $REPO_DIR/${PKG_NAME}_${VERSION}_${ARCH}.deb"
 echo ""
 echo "Install with:"
-echo "  sudo dpkg -i $PKG_NAME\_$VERSION\_$ARCH.deb"
+echo "  sudo dpkg -i ${PKG_NAME}_${VERSION}_${ARCH}.deb"
 echo ""
 echo "Remove with:"
 echo "  sudo apt remove $PKG_NAME"
