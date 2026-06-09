@@ -9,7 +9,7 @@
 Radegast Metaverse Client
 
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://github.com/cinderblocks/radegast/blob/master/LICENSE.txt)
-[![Download .deb](https://img.shields.io/badge/Download-.deb-brightgreen)](https://github.com/DDynamic-Evolution/radegastLinux/releases/download/v2.54/radegast-veles_2.53-15-gb1da94f8_amd64.deb)
+[![Download .deb](https://img.shields.io/badge/Download-.deb-brightgreen)](https://github.com/DDynamic-Evolution/radegastLinux/releases/download/v0.1.2/radegast-veles_0.1.2_amd64.deb)
 
 ## Getting started
 
