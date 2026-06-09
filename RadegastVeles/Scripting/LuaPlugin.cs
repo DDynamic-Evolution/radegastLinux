@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using MoonSharp.Interpreter;
 using MoonSharp.Interpreter.Loaders;
@@ -11,7 +10,6 @@ public sealed class LuaPlugin : IDisposable
 {
     private readonly Script _script;
     private readonly string _filePath;
-    private readonly Dictionary<string, Closure> _callbacks = new();
 
     public string Name { get; }
     public string FilePath => _filePath;
@@ -36,11 +34,6 @@ public sealed class LuaPlugin : IDisposable
 
     private void RegisterCoreApi()
     {
-        _script.Globals["on_chat"] = (Action<Closure>)RegisterCallback("on_chat");
-        _script.Globals["on_im"] = (Action<Closure>)RegisterCallback("on_im");
-        _script.Globals["on_connected"] = (Action<Closure>)RegisterCallback("on_connected");
-        _script.Globals["on_disconnected"] = (Action<Closure>)RegisterCallback("on_disconnected");
-        _script.Globals["on_teleport"] = (Action<Closure>)RegisterCallback("on_teleport");
         _script.Globals["send_chat"] = (Action<string, double>)LuaApi.SendChat;
         _script.Globals["send_im"] = (Action<string, string>)LuaApi.SendIM;
         _script.Globals["teleport"] = (Action<string, double, double, double>)LuaApi.Teleport;
@@ -54,9 +47,10 @@ public sealed class LuaPlugin : IDisposable
         _script.Globals["schedule"] = (Action<double, Closure>)LuaApi.Schedule;
     }
 
-    private Action<Closure> RegisterCallback(string name)
+    private DynValue? GetHook(string name)
     {
-        return closure => { _callbacks[name] = closure; };
+        var val = _script.Globals.Get(name);
+        return val.Type == DataType.Function ? val : null;
     }
 
     public bool Load()
@@ -78,9 +72,10 @@ public sealed class LuaPlugin : IDisposable
         if (IsRunning) return;
         IsRunning = true;
 
-        if (_callbacks.TryGetValue("on_start", out var onStart))
+        var fn = GetHook("on_start");
+        if (fn != null)
         {
-            try { _script.Call(onStart); }
+            try { _script.Call(fn); }
             catch (Exception ex) { OpenMetaverse.Logger.Warn($"[Lua:{Name}] on_start error: {ex.Message}"); }
         }
     }
@@ -90,9 +85,10 @@ public sealed class LuaPlugin : IDisposable
         if (!IsRunning) return;
         IsRunning = false;
 
-        if (_callbacks.TryGetValue("on_stop", out var onStop))
+        var fn = GetHook("on_stop");
+        if (fn != null)
         {
-            try { _script.Call(onStop); }
+            try { _script.Call(fn); }
             catch (Exception ex) { OpenMetaverse.Logger.Warn($"[Lua:{Name}] on_stop error: {ex.Message}"); }
         }
     }
@@ -101,9 +97,10 @@ public sealed class LuaPlugin : IDisposable
     {
         if (!IsRunning) return;
 
-        if (_callbacks.TryGetValue(eventName, out var closure))
+        var fn = GetHook(eventName);
+        if (fn != null)
         {
-            try { _script.Call(closure, args); }
+            try { _script.Call(fn, args); }
             catch (Exception ex) { OpenMetaverse.Logger.Warn($"[Lua:{Name}] {eventName} error: {ex.Message}"); }
         }
     }
@@ -111,6 +108,5 @@ public sealed class LuaPlugin : IDisposable
     public void Dispose()
     {
         Stop();
-        _callbacks.Clear();
     }
 }
