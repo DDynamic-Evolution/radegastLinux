@@ -27,6 +27,7 @@ using LibreMetaverse;
 using OpenMetaverse;
 using OpenMetaverse.StructuredData;
 using Radegast.Veles.MQTT;
+using Radegast.Veles.Scripting;
 using Radegast.Veles.VPN;
 using Radegast.Veles.ViewModels;
 using Radegast.Veles.Views;
@@ -78,9 +79,13 @@ public sealed class RadegastInstanceAvalonia : RadegastInstance
     /// <summary>MQTT client manager.</summary>
     public MqttManager Mqtt { get; } = new();
 
+    /// <summary>Lua script plugin manager.</summary>
+    public LuaPluginManager LuaPlugins { get; }
+
     internal RadegastInstanceAvalonia(string appName, GridClient client)
         : base(appName, client, new NetComAvalonia(client))
     {
+        LuaPlugins = new LuaPluginManager(this);
         // Initialize VPN helper
         var helperPath = Path.Combine(AppContext.BaseDirectory, "vpn-helper");
         Vpn = new VpnManager(helperPath);
@@ -478,6 +483,7 @@ public sealed class RadegastInstanceAvalonia : RadegastInstance
         NetCom.AlertMessageReceived -= NetCom_AlertMessageReceived;
         Mqtt.CommandReceived -= OnMqttCommand;
         Mqtt.Dispose();
+        LuaPlugins.Dispose();
         Vpn.Dispose();
         ChatLog.Dispose();
         base.CleanUp();

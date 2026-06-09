@@ -19,3 +19,4 @@ RadegastVeles/Generated.cs
 ProductInstallFiles.wxs
 .DS_Store
 AGENTS.md
+*.deb
