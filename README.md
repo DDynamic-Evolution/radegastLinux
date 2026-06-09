@@ -130,7 +130,7 @@ Pull requests are nice. Try not to be a dick, and we will all get along just fin
 
 ### Linux maintainer:
 
-* **mic0re**
+* **Miko Astral**
 
 ### Contributors:
 
