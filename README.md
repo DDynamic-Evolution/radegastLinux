@@ -13,7 +13,7 @@ RadegastVeles – Avalonia NG Metaverse Client
 
 ## Getting started
 
-Radegast is a virtual world client compatible with Second Life and OpenSimulator.
+Radegast Veles is a virtual world client compatible with Second Life and OpenSimulator.
 Its main purpose is to provide an alternative client to Linden Lab derived virtual world viewers.
 There is a strong focus on accessability and non-3D interaction.
 
