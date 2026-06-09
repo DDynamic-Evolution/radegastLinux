@@ -8,8 +8,8 @@
 ```
 RadegastVeles – Avalonia NG Metaverse Client
 
-[![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://github.com/cinderblocks/radegast/blob/master/LICENSE.txt)
-[![Download .deb](https://img.shields.io/badge/Download-.deb-brightgreen)](https://github.com/DDynamic-Evolution/radegastLinux/releases/download/v0.1.3/radegast-veles_0.1.3_amd64.deb)
+[![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://github.com/DDynamic-Evolution/radegastLinux/blob/master/LICENSE.txt)
+[![Download .deb](https://img.shields.io/badge/Download-.deb-brightgreen)](https://github.com/DDynamic-Evolution/radegastLinux/releases/download/v0.1.4/radegast-veles_0.1.4_amd64.deb)
 
 ## Getting started
 
@@ -144,7 +144,7 @@ Based on SLeek
 Copyright © 2006-2008, Paul Clement (a.k.a. Delta)
 All rights reserved.
 
-LibreMetaverse (including LslTools, PrimMesher, Meshmerizer, RLV, Voice.Vivox, Voice.WebRTC)
+LibreMetaverse (including LslTools, PrimMesher, Meshmerizer, RLV)
 Copyright © 2024-2026 Sjofn LLC
 https://github.com/cinderblocks/libremetaverse
 
