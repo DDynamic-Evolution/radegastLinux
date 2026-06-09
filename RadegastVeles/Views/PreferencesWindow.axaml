@@ -10,8 +10,9 @@
         x:Class="Radegast.Veles.Views.PreferencesWindow"
         x:DataType="vm:PreferencesViewModel"
         Title="Preferences"
-        Width="540" Height="500"
-        CanResize="False"
+        Width="640" Height="540"
+        MinWidth="480" MinHeight="400"
+        CanResize="True"
         WindowStartupLocation="CenterOwner"
         AutomationProperties.Name="Preferences window">
     <DockPanel>
