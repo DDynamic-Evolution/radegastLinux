@@ -239,6 +239,48 @@
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>
+                    <TabItem Header="Scripting" AutomationProperties.Name="Lua scripting preferences">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="8" Spacing="12">
+                                <TextBlock Text="Lua Scripting"
+                                           FontWeight="SemiBold" FontSize="14" />
+                                <TextBlock Text="Manage Lua scripts for client automation. Place .lua files in the scripts directory."
+                                           TextWrapping="Wrap" FontSize="11" Opacity="0.65" />
+
+                                <ListBox ItemsSource="{Binding Lua.Scripts}"
+                                         SelectedItem="{Binding Lua.SelectedScript}"
+                                         Height="120"
+                                         AutomationProperties.Name="Lua scripts">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                                <TextBlock Text="(running)" FontSize="11"
+                                                           IsVisible="{Binding IsRunning}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Button Content="Reload All" Command="{Binding Lua.ReloadAllCommand}" />
+                                    <Button Content="Reload Selected" Command="{Binding Lua.ReloadScriptCommand}"
+                                            IsEnabled="{Binding Lua.SelectedScript, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                    <Button Content="Open Scripts Folder" Command="{Binding Lua.OpenScriptsFolderCommand}" />
+                                </StackPanel>
+
+                                <TextBlock Text="{Binding Lua.ScriptsDirectory}" FontSize="11" Opacity="0.55" />
+
+                                <Separator />
+                                <TextBlock Text="Console" FontWeight="SemiBold" FontSize="12" />
+                                <TextBox Text="{Binding Lua.LogText}"
+                                         IsReadOnly="True"
+                                         Height="120"
+                                         AcceptsReturn="True"
+                                         AutomationProperties.Name="Lua console output" />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
                     <TabItem Header="VPN" AutomationProperties.Name="VPN preferences">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="8" Spacing="12">

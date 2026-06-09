@@ -27,6 +27,7 @@ using CommunityToolkit.Mvvm.Input;
 using OpenMetaverse.StructuredData;
 using Radegast.Media;
 using Radegast.Veles.Core;
+using Radegast.Veles.Scripting;
 using Radegast.Veles.VPN;
 
 namespace Radegast.Veles.ViewModels;
@@ -90,6 +91,9 @@ public partial class PreferencesViewModel : ObservableObject, IDisposable
 
     // VPN
     public VpnViewModel? Vpn { get; }
+
+    // Lua Scripting
+    public LuaViewModel Lua { get; }
 
     // Display Names
     [ObservableProperty]
@@ -217,6 +221,7 @@ public partial class PreferencesViewModel : ObservableObject, IDisposable
         Rlv = rlv;
         Mqtt = new MqttViewModel(instance, instance.Mqtt);
         Vpn = new VpnViewModel(instance, instance.Vpn);
+        Lua = new LuaViewModel(instance);
         Load();
         _media.PropertyChanged += OnMediaPropertyChanged;
     }

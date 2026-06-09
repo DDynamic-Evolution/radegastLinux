@@ -14,6 +14,8 @@ public static class LuaApi
 
     internal static RadegastInstanceAvalonia? Instance { get; set; }
 
+    internal static Action<string>? OnLog { get; set; }
+
     public static void SendChat(string message, double channel)
     {
         if (Instance == null) return;
@@ -34,17 +36,29 @@ public static class LuaApi
             Instance.Client.Self.Teleport(region, new Vector3((float)x, (float)y, (float)z)));
     }
 
-    public static void Log(string message) =>
+    public static void Log(string message)
+    {
         OpenMetaverse.Logger.Warn($"[Lua] {message}");
+        OnLog?.Invoke(message);
+    }
 
-    public static void LogInfo(string message) =>
+    public static void LogInfo(string message)
+    {
         OpenMetaverse.Logger.Warn($"[Lua] {message}");
+        OnLog?.Invoke(message);
+    }
 
-    public static void LogWarn(string message) =>
+    public static void LogWarn(string message)
+    {
         OpenMetaverse.Logger.Warn($"[Lua] {message}");
+        OnLog?.Invoke(message);
+    }
 
-    public static void LogError(string message) =>
+    public static void LogError(string message)
+    {
         OpenMetaverse.Logger.Warn($"[Lua] {message}");
+        OnLog?.Invoke(message);
+    }
 
     public static string? GetSetting(string key)
     {
