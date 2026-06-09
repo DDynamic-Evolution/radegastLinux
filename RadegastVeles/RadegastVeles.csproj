@@ -11,7 +11,7 @@
     <Platforms>AnyCPU;x64;x86;ARM64</Platforms>
     <OutputPath>..\bin\$(Configuration)\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <ApplicationIcon>..\Radegast\radegast.ico</ApplicationIcon>
+    <ApplicationIcon>Assets\radegast.ico</ApplicationIcon>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>

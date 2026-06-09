@@ -7,64 +7,6 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
-    name: Build (${{ matrix.platform }})
-    runs-on: windows-2022
-    strategy:
-      matrix:
-        platform: [ x64, x86, ARM64 ]
-        configuration: [ ReleaseWindows ]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-          fetch-depth: 0
-          persist-credentials: true
-
-      - name: Setup DotNet
-        uses: actions/setup-dotnet@v3
-
-      - name: Setup MSBuild
-        shell: pwsh
-        run: |
-          $msbuildPath = & "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe | Select-Object -First 1
-          $msbuildDir = Split-Path $msbuildPath -Parent
-          echo "$msbuildDir" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          Write-Host "Added MSBuild to PATH: $msbuildDir"
-
-      - name: Set TAG_VERSION
-        shell: pwsh
-        run: |
-          if ("${{ github.ref_type }}" -eq "tag") {
-            $tag = '${{ github.ref_name }}'
-            $tagVersion = $tag -replace 'v',''
-            $tagVersion = "$tagVersion.${{ github.run_number }}"
-          } else {
-            $tagVersion = "v3.0.${{ github.run_number }}"
-            $tagVersion = $tagVersion -replace 'v',''
-          }
-          Write-Host "Setting TAG_VERSION to $tagVersion"
-          echo "TAG_VERSION=$tagVersion" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
-
-      - name: Restore NuGet packages
-        run: nuget restore radegast.sln
-
-      - name: Restore for platform-specific build
-        run: msbuild radegast.sln /t:Restore /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }}
-
-      - name: Build solution
-        run: msbuild radegast.sln /m /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }}
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: Radegast-${{ matrix.platform }}-${{ env.TAG_VERSION }}
-          path: |
-            bin\Release\**
-            bin\**\Release\**
-
   test:
     name: Test (Radegast.Core)
     runs-on: ubuntu-latest
@@ -81,7 +23,7 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Run tests
-        run: dotnet test Radegast.Core.Tests/Radegast.Core.Tests.csproj --framework net8.0 --configuration Release --logger "trx;LogFileName=test-results.trx" --verbosity normal
+        run: dotnet test Radegast.Core.Tests/Radegast.Core.Tests.csproj --configuration Release --logger "trx;LogFileName=test-results.trx" --verbosity normal
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -89,28 +31,3 @@ jobs:
         with:
           name: test-results
           path: Radegast.Core.Tests/TestResults/test-results.trx
-
-  test-windows:
-    name: Test net48 (Windows)
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-          fetch-depth: 0
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
-
-      - name: Run tests (net48)
-        run: dotnet test Radegast.Core.Tests/Radegast.Core.Tests.csproj --framework net48 --configuration Release --logger "trx;LogFileName=test-results-net48.trx" --verbosity normal
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results-net48
-          path: Radegast.Core.Tests\TestResults\test-results-net48.trx
